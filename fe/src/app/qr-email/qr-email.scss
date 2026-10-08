@@ -1,0 +1,100 @@
+@use "bases/rounds" as *;
+@use "bases/colors" as *;
+@use "mixins/general" as *;
+
+.text-area {
+  border-radius: $round-4;
+}
+
+.text-input {
+  width: 100%;
+  height: 4rem;
+  padding: 0.5rem;
+  border-radius: $round-4;
+  &.qr-width {
+    width: 6rem;
+  }
+}
+
+.form-error {
+  border-color: $error-color;
+}
+
+.hide-it {
+  position: absolute;
+  opacity: 0;
+}
+
+.checkbox {
+  cursor: pointer;
+  @include prevent-select();
+}
+
+.btn-round {
+  border-radius: 50% !important;
+}
+
+.f-button, .full-width {
+  width: 100%;
+}
+
+.color-picker-btn {
+  height: 2.4rem;
+  width: 2.4rem;
+  border-radius: $round-4;
+  border: 0.1rem solid $body-text-color;
+}
+
+// Upload image
+.upload-guide {
+  width: min(15rem, 30vw);
+  aspect-ratio: 1/1;
+  display: flex;
+  flex-flow: column wrap;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+}
+
+.image-upload {
+  inset: 0;
+  opacity: 0;
+  z-index: 1;
+  cursor: pointer;
+}
+
+.close-button {
+  margin-top: 2.4rem;
+}
+
+.img-frame {
+  border: 1px dashed $neutral-300;
+  border-radius: $round-12;
+  overflow: hidden;
+  &:has(input:focus) {
+    border-color: $body-text-color;
+  }
+}
+
+.img-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.close-btn {
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 2.4rem;
+  height: 2.4rem;
+  background-color: transparent;
+  color: $error-color;
+  padding: 0;
+  border-color: transparent;
+  border-radius: 50%;
+}
+
+.error {
+  text-align: center;
+  color: $error-color;
+}

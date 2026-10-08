@@ -6,7 +6,7 @@
 @use './../../mixins/general' as *;
 @use './../../bases/config' as *;
 
-[class|="btn"] {
+.btn {
   all: unset;
   height: var(--#{$ds-prefix}-dse-btn-height-md, 4rem);
   font-size: var(--#{$ds-prefix}-dse-btn-font-size-md, 1.6rem);
@@ -23,15 +23,15 @@
   cursor: pointer;
   @extend %prevent-selection;
 
+  &:not(&-icon) {
+    padding-left: var(--#{$ds-prefix}-dse-btn-padding-md, 1.6rem);
+    padding-right: var(--#{$ds-prefix}-dse-btn-padding-md, 1.6rem);
+  }
+
   @include hand-phone-view() {
     height: 3.2rem;
     padding-left: $gap-12;
     padding-right: $gap-12;
-  }
-
-  &:not([class*="-icon"]) {
-    padding-left: var(--#{$ds-prefix}-dse-btn-padding-md, 1.6rem);
-    padding-right: var(--#{$ds-prefix}-dse-btn-padding-md, 1.6rem);
   }
 
   &:disabled {
@@ -40,10 +40,7 @@
     // filter: grayscale(68%);
   }
 
-}
-
-.btn {
-  &-primary {
+  &.btn-primary {
     background-color: $btn-primary-bg;
     color: $btn-primary-color;
     border-color: $btn-border-color;
@@ -59,7 +56,7 @@
     }
   }
 
-  &-secondary {
+  &.btn-secondary {
     background-color: $btn-secondary-bg;
     color: $btn-secondary-color;
     border-color: $btn-secondary-border-color;
@@ -75,7 +72,7 @@
     }
   }
 
-  &-outline {
+  &.btn-outline {
     background-color: transparent;
     border: 1px solid $btn-primary-bg;
     color: inherit;
@@ -111,24 +108,24 @@
     padding-left: var(--#{$ds-prefix}-dse-btn-padding-lg, 2.4rem);
     padding-right: var(--#{$ds-prefix}-dse-btn-padding-lg, 2.4rem);
   }
+}
 
-  &-square {
-    font-size: $icon-size;
-    width: var(--#{$ds-prefix}-dse-btn-height-md, 4rem);
-    height: var(--#{$ds-prefix}-dse-btn-height-md, 4rem);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border: none;
+.btn-square {
+  font-size: $icon-size;
+  width: var(--#{$ds-prefix}-dse-btn-height-md, 4rem);
+  height: var(--#{$ds-prefix}-dse-btn-height-md, 4rem);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: none;
 
-    &.btn-small {
-      width: var(--#{$ds-prefix}-dse-btn-height-sm, 3.2rem);
-      height: var(--#{$ds-prefix}-dse-btn-height-sm, 3.2rem);
-    }
-    &.btn-large {
-      width: var(--#{$ds-prefix}-dse-btn-height-lg, 4.8rem);
-      height: var(--#{$ds-prefix}-dse-btn-height-lg, 4.8rem);
-    }
+  &.btn-small {
+    width: var(--#{$ds-prefix}-dse-btn-height-sm, 3.2rem);
+    height: var(--#{$ds-prefix}-dse-btn-height-sm, 3.2rem);
+  }
+  &.btn-large {
+    width: var(--#{$ds-prefix}-dse-btn-height-lg, 4.8rem);
+    height: var(--#{$ds-prefix}-dse-btn-height-lg, 4.8rem);
   }
 }
 

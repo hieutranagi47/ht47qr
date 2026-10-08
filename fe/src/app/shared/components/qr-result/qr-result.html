@@ -1,0 +1,8 @@
+<figure>
+  <img class="qr-preview" [src]="imgBlob()" src="Your QR Code" />
+  <figcaption><cite>You can save it to use in the future</cite></figcaption>
+</figure>
+<div class="d-flex justify-end gap-24">
+  <button class="btn btn-outline btn-primary" (click)="stopViewResultHandling()">New</button>
+  <button class="btn btn-outline btn-primary" (click)="downloadBlob()">Download</button>
+</div>

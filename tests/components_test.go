@@ -16,11 +16,12 @@ import (
 	"strings"
 	"testing"
 
+	"htqrcode"
+	"htqrcode/common"
+
 	"github.com/makiuchi-d/gozxing"
 	decoder "github.com/makiuchi-d/gozxing/qrcode"
 	"github.com/stretchr/testify/require"
-	"htqrcode"
-	"htqrcode/common"
 )
 
 func startService(t *testing.T) *httptest.Server {

@@ -1,0 +1,204 @@
+<h1 class="page-title text-center mt-36">QR Code for Your Business Card</h1>
+@if (imgBlob()) {
+  <div class="form mx-auto">
+    <ht47-qr-result [imgBlob]="imgBlob()" (stopViewResult)="createANewOne()"></ht47-qr-result>
+  </div>
+} @else {
+  <form class="form mx-auto mb-40" (submit)="onSubmit($event)">
+    <section class="d-flex gap-24">
+      <div class="flex-a-half d-flex direction-column items-start gap-16 mb-24">
+        <label for="text-area" class="fw-600 required">Your Name:</label>
+        <input type="text" [formField]="qrCodeTextForm.data.name" class="text-input full-width"
+            placeholder="Hill Tran"
+            [ngClass]="{'form-error': qrCodeTextForm.data.name().dirty() && qrCodeTextForm.data.name().errors().length > 0}">
+        @if (qrCodeTextForm.data.name().errors().length > 0 && qrCodeTextForm.data.name().dirty()) {
+          @for (err of qrCodeTextForm.data.name().errors(); track $index) {
+            <p class="error m-0">{{ err.message }}</p>
+          }
+        }
+      </div>
+      <div class="flex-a-half d-flex direction-column items-start gap-16 mb-24">
+        <label for="text-area" class="fw-600 required">Phone number:</label>
+        <input type="text" [formField]="qrCodeTextForm.data.phone" class="text-input full-width"
+            placeholder="+84912346789"
+            [ngClass]="{'form-error': qrCodeTextForm.data.phone().dirty() && qrCodeTextForm.data.phone().errors().length > 0}">
+        @if (qrCodeTextForm.data.phone().errors().length > 0 && qrCodeTextForm.data.phone().dirty()) {
+          @for (err of qrCodeTextForm.data.phone().errors(); track $index) {
+            <p class="error m-0">{{ err.message }}</p>
+          }
+        }
+      </div>
+    </section>
+
+    <div class="d-flex direction-column items-start gap-16 mb-24">
+      <label for="text-area" class="fw-600">Email:</label>
+      <input type="text" [formField]="qrCodeTextForm.data.email" class="text-input full-width"
+          placeholder="hilltran@ht47.org"
+          [ngClass]="{'form-error': qrCodeTextForm.data.email().dirty() && qrCodeTextForm.data.email().errors().length > 0}">
+      @if (qrCodeTextForm.data.email().errors().length > 0 && qrCodeTextForm.data.email().dirty()) {
+        @for (err of qrCodeTextForm.data.email().errors(); track $index) {
+          <p class="error m-0">{{ err.message }}</p>
+        }
+      }
+    </div>
+
+    <div class="d-flex direction-column items-start gap-16 mb-24">
+      <label for="text-area" class="fw-600">Organization:</label>
+      <input type="text" [formField]="qrCodeTextForm.data.organization" class="text-input full-width"
+          placeholder="Freelancer"
+          [ngClass]="{'form-error': qrCodeTextForm.data.organization().dirty() && qrCodeTextForm.data.organization().errors().length > 0}">
+      @if (qrCodeTextForm.data.organization().errors().length > 0 && qrCodeTextForm.data.organization().dirty()) {
+        @for (err of qrCodeTextForm.data.organization().errors(); track $index) {
+          <p class="error m-0">{{ err.message }}</p>
+        }
+      }
+    </div>
+
+    <div class="d-flex direction-column items-start gap-16 mb-24">
+      <label for="text-area" class="fw-600">Title:</label>
+      <input type="text" [formField]="qrCodeTextForm.data.title" class="text-input full-width"
+          placeholder="Dept Head"
+          [ngClass]="{'form-error': qrCodeTextForm.data.title().dirty() && qrCodeTextForm.data.title().errors().length > 0}">
+      @if (qrCodeTextForm.data.title().errors().length > 0 && qrCodeTextForm.data.title().dirty()) {
+        @for (err of qrCodeTextForm.data.title().errors(); track $index) {
+          <p class="error m-0">{{ err.message }}</p>
+        }
+      }
+    </div>
+    
+    <div class="d-flex direction-column items-start gap-16 mb-24">
+      <label for="text-area" class="fw-600">Website:</label>
+      <input type="text" [formField]="qrCodeTextForm.data.website" class="text-input full-width"
+          placeholder="https://ht47.vercel.app"
+          [ngClass]="{'form-error': qrCodeTextForm.data.website().dirty() && qrCodeTextForm.data.website().errors().length > 0}">
+      @if (qrCodeTextForm.data.website().errors().length > 0 && qrCodeTextForm.data.website().dirty()) {
+        @for (err of qrCodeTextForm.data.website().errors(); track $index) {
+          <p class="error m-0">{{ err.message }}</p>
+        }
+      }
+    </div>
+    <div class="d-flex direction-column items-start gap-16 mb-24">
+      <label for="text-area" class="fw-600">Address:</label>
+      <input type="text" [formField]="qrCodeTextForm.data.address" class="text-input full-width"
+          placeholder="Tan Tien Ward, DakLak Province"
+          [ngClass]="{'form-error': qrCodeTextForm.data.address().dirty() && qrCodeTextForm.data.address().errors().length > 0}">
+      @if (qrCodeTextForm.data.address().errors().length > 0 && qrCodeTextForm.data.address().dirty()) {
+        @for (err of qrCodeTextForm.data.address().errors(); track $index) {
+          <p class="error m-0">{{ err.message }}</p>
+        }
+      }
+    </div>
+  
+    <!-- Image for the QR Code Generator -->
+    <section class="d-flex gap-12 justify-around">
+      <!-- LOGO -->
+      <div class="d-flex direction-column gap-16 items-center mb-24">
+        <label for="" class="fw-600">Logo</label>
+        @if (!qrCodeTextForm.logo_img().value()) {
+          <div class="img-frame relative">
+            <figure class="upload-guide">
+              <p class="fs-0"><i class="ion ion-ios-cloud-upload fs-36"></i></p>
+              <figcaption class="fs-12"><cite>jpeg, png, <= 150x150px</cite></figcaption>
+            </figure>
+            <input type="file" accept="image/jpeg,image/jpg,image/png" [multiple]="false" class="image-upload absolute" (change)="addLogo($event)">
+          </div>
+        } @else {
+          <div class="img-frame relative">
+            <figure class="upload-guide">
+              <img class="img-preview" [src]="previewLogoImg()"
+                alt="logo preview" />
+            </figure>
+            <button type="button" (click)="clearLogoImage()"
+              class="absolute close-btn fs-0 d-flex items-center justify-center">
+              <i class="ion ion-ios-close fs-24"></i>
+            </button>
+          </div>
+        }
+      </div>
+  
+      <!-- HALFTONE - MUST no customized qr shape -->
+      @if (qrCodeTextForm.is_circle_shape().value() === false && qrCodeTextForm.is_custom_shape().value() === false) {
+        <div class="d-flex direction-column gap-16 items-center mb-24">
+          <label for="" class="fw-600">Halftone Image</label>
+          @if (!qrCodeTextForm.halftone_image().value()) {
+            <div class="img-frame relative">
+              <figure class="upload-guide">
+                <p class="fs-0"><i class="ion ion-ios-cloud-upload fs-36"></i></p>
+                <figcaption class="fs-12"><cite>jpeg, png, <= 5MB</cite></figcaption>
+              </figure>
+              <input type="file" accept="image/jpeg,image/jpg,image/png" [multiple]="false" class="image-upload absolute" (change)="addHalftoneLogo($event)">
+            </div>
+          } @else {
+            <div class="img-frame relative">
+              <figure class="upload-guide">
+                <img class="img-preview" [src]="previewHalftoneImg()"
+                  alt="Halftone image preview" />
+              </figure>
+              <button type="button" (click)="clearHalftoneImage()"
+                class="absolute close-btn fs-0 d-flex items-center justify-center">
+                <i class="ion ion-ios-close fs-24"></i>
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </section>
+  
+    <div class="d-flex direction-row items-center gap-16 mb-24">
+      <label for="" class="fw-600 required">Foreground color:</label>
+      <button type="button" class="color-picker-btn btn-round"
+        [style.backgroundColor]="qrCodeTextForm.foreground_color().value()"
+        (click)="toggleColorPickerModal()"></button>
+      <dialog [open]="showColorPickerModal()" ht47Clickio (clickOut)="closeColorPickerModal()" class="center-dialog">
+        <color-sketch [color]="qrCodeTextForm.foreground_color().value()" [disableAlpha]="true" (onChangeComplete)="forceGroundColorChange($event)">
+        </color-sketch>
+        <button class="close-button btn btn-primary full-width" type="button" (click)="closeColorPickerModal()">Close</button>
+      </dialog>
+    </div>
+  
+    <section class="d-flex direction-row justify-between gap-12">
+  
+      <div class="d-flex direction-row items-center gap-16 mb-24">
+        <label for="" class="fw-600">QR Width</label>
+        <input type="number" [formField]="qrCodeTextForm.qr_width" class="text-input qr-width"
+          [ngClass]="{'form-error': qrCodeTextForm.border_width().errors().length > 0}">
+      </div>
+      
+      <div class="d-flex direction-row items-center gap-16 mb-24">
+        <label for="" class="fw-600">Border Width</label>
+        <input type="number" [formField]="qrCodeTextForm.border_width" class="text-input qr-width"
+          [ngClass]="{'form-error': qrCodeTextForm.border_width().errors().length > 0}">
+      </div>
+    </section>
+  
+    <div class="d-flex direction-row items-center gap-24 mb-24">
+      <label for="" class="fw-600">Custom Shape</label>
+      @if (!qrCodeTextForm.is_custom_shape().value()) {
+        <label class="relative checkbox d-flex items-center gap-8">
+          <span>Circle:</span>
+          <span class="fs-0">
+            <i class="ion fs-24 lh-100" [ngClass]="qrCodeTextForm.is_circle_shape().value() ? 'ion-ios-checkmark-circle-outline' : 'ion-ios-radio-button-off'"></i>
+            <input class="hide-it" type="checkbox" [formField]="qrCodeTextForm.is_circle_shape">
+          </span>
+        </label>
+      }
+  
+      @if (!qrCodeTextForm.is_circle_shape().value()) {
+        <label class="relative checkbox d-flex items-center gap-8">
+          <span>Customized:</span>
+          <span class="fs-0">
+            <i class="ion fs-24 lh-100" [ngClass]="qrCodeTextForm.is_custom_shape().value() ? 'ion-ios-checkmark-circle-outline' : 'ion-ios-radio-button-off'"></i>
+            <input class="hide-it" type="checkbox" [formField]="qrCodeTextForm.is_custom_shape">
+          </span>
+        </label>
+      }
+    </div>
+  
+    <button
+      type="submit"
+      [disabled]="qrCodeTextForm().invalid() || !qrCodeTextForm().dirty()"
+      class="btn btn-primary f-button"
+    >Generate QR Code</button>
+  </form>
+  @if (error()) {<p class="error">{{ error() }}</p>}
+}

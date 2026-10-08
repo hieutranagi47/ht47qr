@@ -1,0 +1,83 @@
+@use "bases/colors" as *;
+@use "bases/config" as *;
+@use "mixins/breakpoints" as *;
+@use "mixins/general" as *;
+
+:host-context(app-footer) {
+  position: relative;
+  z-index: 0;
+}
+
+.footer {
+  background-color: $primary-color;
+  border-bottom: $footer-border solid $primary-color;
+  // transform: translateY(100%);
+  transition: transform 0.3s linear;
+  font-size: 80%;
+  position: relative;
+  // &.fixed-bottom {
+  //     z-index: 1029;
+  // }
+  // &.show-footer {
+  //     transform: translateY(0);
+  // }
+  .footer-page-container {
+    height: calc(#{$footer-height} - #{$footer-border});
+    @include flexbox() {
+      flex-flow: row nowrap;
+    }
+    .ht-rights {
+      @include flex(1 1 auto);
+      background-color: $body-bg-color;
+      padding: 1rem 0;
+    }
+    .footer-separate {
+      width: 6.6rem;
+      position: relative;
+      background-image: linear-gradient(
+        to right,
+        $primary-color 50%,
+        $body-bg-color 50%
+      );
+      &::before {
+        content: "";
+        position: absolute;
+        height: 100%;
+        width: 50%;
+        left: 0;
+        top: 0;
+        background-color: $body-bg-color;
+        border-radius: 0 0 80% 0/0 0 48% 0;
+      }
+      &::after {
+        content: "";
+        position: absolute;
+        height: 100%;
+        width: 50%;
+        right: 0;
+        top: 0;
+        background-color: $body-bg-color;
+        border-top: calc(#{$footer-height} - #{$footer-border}) solid
+          $primary-color;
+        border-radius: 80% 0 0 0/61% 0 0 0;
+      }
+    }
+    .footer-contactme {
+      @include flex(0 0 auto);
+      background-color: $primary-color;
+      padding-left: 2rem;
+      padding-right: 5rem;
+      .email {
+        padding: 1rem 0;
+        display: block;
+      }
+    }
+
+    // Utilities
+    @include media-breakpoint-down(sm) {
+      .mobile-hide {
+        display: none;
+      }
+    }
+  }
+}

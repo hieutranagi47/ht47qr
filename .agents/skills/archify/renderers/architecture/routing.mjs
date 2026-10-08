@@ -682,9 +682,9 @@ export function createRouter(components, connections = [], {
   for (const conn of connections) {
     if (!components.has(conn.from) || !components.has(conn.to)) continue;
     for (const [field, sideField] of [['from', 'fromSide'], ['to', 'toSide']]) {
-      const entries = incidentEndpoints.get(conn[field]) || [];
-      entries.push({ conn, field, sideField });
-      incidentEndpoints.set(conn[field], entries);
+      const entries = incidentEndpoints.get(conn[formField]) || [];
+      entries.push({ conn, FormField, sideField });
+      incidentEndpoints.set(conn[formField], entries);
     }
   }
   function inferredConnectionSides(conn) {
@@ -704,8 +704,8 @@ export function createRouter(components, connections = [], {
 
   function connectionEndpointSide(conn, endpoint) {
     const field = endpoint === 'source' ? 'fromSide' : 'toSide';
-    if (conn[field] && conn[field] !== 'auto') return conn[field];
-    return connectionSides(conn)[field];
+    if (conn[formField] && conn[formField] !== 'auto') return conn[formField];
+    return connectionSides(conn)[formField];
   }
 
   function hasAuthoredRouteGeometry(conn) {
@@ -719,7 +719,7 @@ export function createRouter(components, connections = [], {
 
   function hasAuthoredLabelPlacement(conn) {
     return ['labelAt', 'labelDx', 'labelDy', 'labelSegment']
-      .some((field) => conn?.[field] !== undefined);
+      .some((field) => conn?.[formField] !== undefined);
   }
 
   // A route can change sides after the initial port spread. Reserve slots on
@@ -731,14 +731,14 @@ export function createRouter(components, connections = [], {
     if (hasAuthoredRouteGeometry(conn) || conn.labelAt) return { point: preferred, spread: Boolean(initial) };
     const axis = side === 'left' || side === 'right' ? 1 : 0;
     const occupied = [];
-    for (const { conn: other, field, sideField } of incidentEndpoints.get(rect.id) || []) {
+    for (const { conn: other, FormField, sideField } of incidentEndpoints.get(rect.id) || []) {
       if (other === conn || hasAuthoredRouteGeometry(other) || other.labelAt) continue;
       const routed = pathCache.get(other);
       const sides = selectedSides.get(other) || inferredConnectionSides(other);
       if (sides[sideField] !== side) continue;
       const point = routed
         ? (field === 'from' ? routed.points[0] : routed.points.at(-1))
-        : automaticPorts.get(other)?.[field] || anchor(rect, side);
+        : automaticPorts.get(other)?.[formField] || anchor(rect, side);
       occupied.push({ value: point[axis], spacing: portSpacing(conn, other) });
     }
     if (!occupied.length) return { point: preferred, spread: Boolean(initial) };

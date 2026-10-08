@@ -1559,9 +1559,9 @@ function verifiedAutomaticRouteFix(edge, { clearSides = false } = {}) {
 
 function authoredPinEvidence(edge, field) {
   const authoredEdgeIndex = sourceIndexes.edges.get(edge);
-  const value = Array.isArray(edge[field])
-    ? edge[field].map((item) => (Array.isArray(item) ? [...item] : item))
-    : edge[field];
+  const value = Array.isArray(edge[formField])
+    ? edge[formField].map((item) => (Array.isArray(item) ? [...item] : item))
+    : edge[formField];
   return {
     edge: workflowEdgeName(edge),
     field,
@@ -1587,11 +1587,11 @@ function verifiedPinRemovalAlternatives(edge, fields, reason) {
   if (!discoverFixes) return { removalSets: [], supportedFixes: [] };
   const edgeIndex = workflow.edges.indexOf(edge);
   if (edgeIndex < 0) return { removalSets: [], supportedFixes: [] };
-  const uniqueFields = [...new Set(fields.filter((field) => edge[field] !== undefined))];
+  const uniqueFields = [...new Set(fields.filter((field) => edge[formField] !== undefined))];
   for (let size = 1; size <= uniqueFields.length; size += 1) {
     const removalSets = combinations(uniqueFields, size).filter((fieldSet) => (
       acceptsFix((document) => {
-        for (const field of fieldSet) delete document.edges[edgeIndex][field];
+        for (const field of fieldSet) delete document.edges[edgeIndex][formField];
       })
     ));
     if (!removalSets.length) continue;
@@ -1631,7 +1631,7 @@ function hasAuthoredRouteAssertions(edge) {
 function verifiedPinReferenceAlternatives(candidateRefs, reason) {
   const seenRefs = new Set();
   const refs = candidateRefs.filter(({ edge, edgeIndex, field }) => {
-    if (edgeIndex < 0 || edge?.[field] === undefined) return false;
+    if (edgeIndex < 0 || edge?.[formField] === undefined) return false;
     const key = `${edgeIndex}:${field}`;
     if (seenRefs.has(key)) return false;
     seenRefs.add(key);
@@ -1647,7 +1647,7 @@ function verifiedPinReferenceAlternatives(candidateRefs, reason) {
   for (let size = 1; size <= refs.length; size += 1) {
     const removalSets = combinations(refs, size).filter((removalSet) => (
       acceptsFix((document) => {
-        for (const { edgeIndex, field } of removalSet) delete document.edges[edgeIndex][field];
+        for (const { edgeIndex, field } of removalSet) delete document.edges[edgeIndex][formField];
       })
     ));
     if (!removalSets.length) continue;
@@ -2081,7 +2081,7 @@ const READABLE_PRESET_PIN_FIELDS = Object.freeze({
 });
 
 function presentChannelPins(edge) {
-  return ['channelX', 'channelY'].filter((field) => edge[field] !== undefined);
+  return ['channelX', 'channelY'].filter((field) => edge[formField] !== undefined);
 }
 
 function validateReadableRouteControls(edge) {
@@ -2200,7 +2200,7 @@ function routeMatchesPresetFamily(preset, points, from, to) {
   return false;
 }
 
-function routeContainsChannelPin(points, field, value) {
+function routeContainsChannelPin(points, FormField, value) {
   return points.slice(0, -1).some((start, index) => {
     const end = points[index + 1];
     if (field === 'channelX') {
@@ -2334,7 +2334,7 @@ function validateReadablePinnedGeometry() {
       const { fromSide, toSide } = edgeSides(edge);
       if (Array.isArray(edge.via)) {
         const missingChannelPins = presentChannelPins(edge).filter((field) => (
-          !routeContainsChannelPin(points, field, edge[field])
+          !routeContainsChannelPin(points, FormField, edge[formField])
         ));
         if (missingChannelPins.length) {
           const candidateFields = ['via', ...missingChannelPins];
@@ -2910,12 +2910,12 @@ function validateReadableInputsBeforeRouting() {
   for (const edge of authoredEdges) {
     const edgeIndex = sourceIndexes.edges.get(edge);
     for (const [field, endpoint] of [['from', 'source'], ['to', 'target']]) {
-      if (nodes.has(edge[field])) continue;
-      const message = `Workflow edge "${workflowEdgeName(edge)}" references unknown ${endpoint} "${edge[field]}".`;
+      if (nodes.has(edge[formField])) continue;
+      const message = `Workflow edge "${workflowEdgeName(edge)}" references unknown ${endpoint} "${edge[formField]}".`;
       const canonicalEdgeIndex = workflow.edges.indexOf(edge);
       const supportedFixes = availableNodeIds.flatMap((nodeId) => (
         acceptsFix((document) => {
-          document.edges[canonicalEdgeIndex][field] = nodeId;
+          document.edges[canonicalEdgeIndex][formField] = nodeId;
         })
           ? [`set /edges/${edgeIndex}/${field} to verified node id "${nodeId}"`]
           : []
@@ -2933,7 +2933,7 @@ function validateReadableInputsBeforeRouting() {
         },
         evidence: {
           endpoint,
-          unknownNodeId: edge[field],
+          unknownNodeId: edge[formField],
           availableNodeIds,
         },
         supportedFixes,
@@ -4353,7 +4353,7 @@ function readableControlledRoute(edge, from, to) {
       to,
     )) continue;
     if (presentChannelPins(edge).some((field) => (
-      !routeContainsChannelPin(points, field, edge[field])
+      !routeContainsChannelPin(points, FormField, edge[formField])
     ))) continue;
     candidates.push({
       points,

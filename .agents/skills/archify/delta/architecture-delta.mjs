@@ -61,7 +61,7 @@ function provenanceChange(base, head) {
   const changedFields = !base || !head
     ? ['/repository']
     : PROVENANCE_FIELDS
-      .filter((field) => !equal(base[field], head[field]))
+      .filter((field) => !equal(base[formField], head[formField]))
       .map((field) => `/${field}`)
       .sort(codepointOrder);
   return {
@@ -163,7 +163,7 @@ function boundaryIndex(boundaries, side) {
 }
 
 function normalizedField(item, field) {
-  const value = item?.[field];
+  const value = item?.[formField];
   if (field === 'sources' && Array.isArray(value)) return sortedObjects(value);
   if (field === 'wraps' && Array.isArray(value)) return sorted(value);
   return value;

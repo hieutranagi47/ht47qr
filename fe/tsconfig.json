@@ -3,6 +3,33 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    "paths": {
+      "@app/*": [
+        "./src/app/*"
+      ],
+      "@env/*": [
+        "./src/environments/*"
+      ],
+      "@store/*": [
+        "./src/app/store/*"
+      ],
+      "@core/*": [
+        "./src/app/core/*"
+      ],
+      "@shared/*": [
+        "./src/app/shared/*"
+      ],
+      "@auth/*": [
+        "./src/app/auth/*"
+      ],
+      "@widget/*": [
+        "./src/app/widget/*"
+      ],
+      "@libs/*": [
+        "./src/libs/*"
+      ]
+    },
+    "strict": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,

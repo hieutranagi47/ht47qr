@@ -1,0 +1,69 @@
+
+@use 'bases/colors' as *;
+@use 'bases/config' as *;
+@use "organisms/header/index.scss";
+
+$nav-height: 6.4rem;
+
+:host {
+  display: block;
+  margin-bottom: $nav-height;
+}
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: $nav-height;
+  z-index: $zindex-fixed;
+  ::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba($body-bg-color, 0.95);
+    backdrop-filter: blur(1rem);
+    box-shadow: 0 2px 4px rgba($body-text-color, 0.1);
+    z-index: -1;
+  }
+}
+
+.logo {
+  padding: 1.3rem 0;
+}
+
+.menu-item {
+  & > a {
+    padding: 0.6rem 0.5rem;
+  }
+  
+  .underline {
+    display: inline-block;
+    width: 0;
+    height: 2px;
+    bottom: 0;
+    right: 0;
+    background-color: $body-text-color;
+    transition: width 0.3s ease;
+  }
+
+  &:hover, &:focus-within, &.active {
+    .underline {
+      width: 100%;
+      left: 0;
+      right: unset;
+    }
+  }
+
+}
+
+.relative {
+  position: relative;
+}
+
+.absolute {
+  position: absolute;
+}

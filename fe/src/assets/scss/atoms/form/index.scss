@@ -1,0 +1,14 @@
+@use "../../bases/colors" as *;
+@use "../../bases/rounds" as *;
+@use "../../bases/spaces" as *;
+
+.form {
+  width: min(48rem, 100%);
+  box-shadow: 0 0 0.5rem $primary-100-text-color;
+  border-radius: $round-12;
+  padding: $gap-24;
+}
+
+.non-resizable {
+  resize: none;
+}
