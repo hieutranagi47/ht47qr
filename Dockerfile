@@ -1,49 +1,54 @@
-FROM node:24-alpine AS fe_builder
+# Build the Angular frontend into client/api, which is embedded by the Go app.
+FROM node:24-alpine AS frontend
 
 WORKDIR /app/fe
 
 RUN npm install --global pnpm@10.8.1
 
-COPY htqrcode/fe/package.json htqrcode/fe/pnpm-lock.yaml ./
+COPY fe/package.json fe/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
-COPY htqrcode/fe/angular.json htqrcode/fe/tsconfig*.json ./
-COPY htqrcode/fe/src/ ./src/
-COPY htqrcode/fe/public/ ./public/
+COPY fe/angular.json fe/tsconfig*.json ./
+COPY fe/src/ ./src/
+COPY fe/public/ ./public/
 
 RUN pnpm run build --configuration production
 
+# Build the Go server with the generated frontend assets.
 FROM golang:1.27.1-alpine AS builder
 
-RUN apk update && \
-    apk upgrade -U && \
-    apk --no-cache add ca-certificates pkgconf gcc libc-dev musl-dev git && \
-    update-ca-certificates && \
-    git config --global http.sslVerify false
-
-RUN mkdir /app
+RUN apk add --no-cache ca-certificates gcc libc-dev musl-dev
 
 WORKDIR /app
 
-COPY htqrcode/go.mod htqrcode/go.sum ./
+COPY go.mod go.sum ./
+RUN --mount=type=cache,target=/go/pkg/mod go mod download
 
-COPY htqrcode/ /app
+COPY . ./
+COPY --from=frontend /app/client/api/ ./client/api/
 
-COPY --from=fe_builder /app/client/api/ /app/client/api/
+RUN CGO_ENABLED=1 go build -tags musl -trimpath -o /out/htqrcode ./cmd
 
-RUN rm -rf ~/.cache/go-build
+# Run as an unprivileged user in a small runtime image.
+FROM alpine:3.22 AS runtime
 
-RUN CGO_ENABLED=1 GOPROXY=direct,off GOINSECURE=* go build -tags musl -o /app/htqrcode /app/cmd
-
-RUN chmod +x /app/htqrcode
-
-## Build an image
-FROM golang:1.27.1-alpine
-
-RUN apk --no-cache add ca-certificates
+RUN apk add --no-cache ca-certificates \
+    && addgroup -S app \
+    && adduser -S -G app app
 
 WORKDIR /app
+RUN mkdir -p /app/data && chown app:app /app/data
+COPY --from=builder /out/htqrcode ./htqrcode
 
-COPY --from=builder /app/htqrcode /app
+USER app
 
-CMD [ "/app/htqrcode" ]
+ENV SERVER_PORT=8080 \
+    SERVER_PORT_TLS=8443 \
+    SERVER_SSE_PORT=8081 \
+    SERVER_SSE_PORT_TLS=8444 \
+    SQLITE_PATH=/app/data/htqrcode.db
+
+EXPOSE 8080 8081 8443 8444
+VOLUME ["/app/data"]
+
+ENTRYPOINT ["/app/htqrcode"]

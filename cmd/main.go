@@ -2,14 +2,16 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/mattn/go-sqlite3"
 
 	"htqrcode"
 	"htqrcode/common/log"
@@ -36,18 +38,20 @@ func main() {
 
 	log.Init(slog.LevelInfo)
 
-	dsn := os.Getenv("POSTGRES_URL")
-	if dsn == "" {
-		panic("POSTGRES_URL environment variable is not set")
+	dbPath := os.Getenv("SQLITE_PATH")
+	if dbPath == "" {
+		dbPath = "./data/htqrcode.db"
 	}
-
-	dbPgx, err := pgxpool.New(ctx, dsn)
+	if err := os.MkdirAll(filepath.Dir(dbPath), 0o750); err != nil {
+		panic(fmt.Errorf("could not create SQLite database directory: %w", err))
+	}
+	db, err := sql.Open("sqlite3", dbPath+"?_journal_mode=WAL&_busy_timeout=5000&_foreign_keys=on")
 	if err != nil {
 		panic(err)
 	}
-	defer dbPgx.Close()
+	defer db.Close()
 
-	if err := waitForDatabase(ctx, dbPgx); err != nil {
+	if err := waitForDatabase(ctx, db); err != nil {
 		panic(err)
 	}
 
@@ -66,7 +70,7 @@ func main() {
 	}
 }
 
-func waitForDatabase(ctx context.Context, db *pgxpool.Pool) error {
+func waitForDatabase(ctx context.Context, db *sql.DB) error {
 	startupCtx, cancel := context.WithTimeout(ctx, databaseStartupTimeout)
 	defer cancel()
 
@@ -76,7 +80,7 @@ func waitForDatabase(ctx context.Context, db *pgxpool.Pool) error {
 	var lastErr error
 	for {
 		pingCtx, cancel := context.WithTimeout(startupCtx, databasePingTimeout)
-		lastErr = db.Ping(pingCtx)
+		lastErr = db.PingContext(pingCtx)
 		cancel()
 
 		if lastErr == nil {
@@ -85,7 +89,7 @@ func waitForDatabase(ctx context.Context, db *pgxpool.Pool) error {
 
 		select {
 		case <-startupCtx.Done():
-			return fmt.Errorf("PostgreSQL was not ready within %s: %w", databaseStartupTimeout, lastErr)
+			return fmt.Errorf("SQLite was not ready within %s: %w", databaseStartupTimeout, lastErr)
 		case <-ticker.C:
 		}
 	}

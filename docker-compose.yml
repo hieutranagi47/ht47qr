@@ -1,0 +1,79 @@
+services:
+  htqrcode:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+      no_cache: true
+    environment:
+      # Giới hạn Concurrency (Xử lý đồng thời) và CPU
+      - GOMAXPROCS=2 # Mặc định, Go sẽ lấy số CPU của máy Host làm giá trị GOMAXPROCS. Nếu bạn chạy container trên một server 64 cores nhưng chỉ giới hạn tài nguyên container là cpus: 2, Go (từ phiên bản 1.24 trở về trước) vẫn có thể hiểu nhầm là có 64 cores, dẫn đến việc tranh chấp CPU và giảm hiệu năng (CPU throttling).
+      - GODEBUG=madvdontneed=1,netdns=go,gctrace=1,schedtrace=1000 # =In ra trạng thái của bộ lập lịch (Scheduler) sau mỗi X mili-giây, giúp bạn xem các Goroutine trong Echo đang phân bổ trên các luồng CPU như thế nào để debug hiện tượng nghẽn.
+      - GOMEMLIMIT=900MiB # ~ 90% of the RAM. Đặt giới hạn mềm cho tổng lượng bộ nhớ mà Go Runtime được phép dùng. Khi bộ nhớ chạm ngưỡng này, bộ thu gom rác (Garbage Collector - GC) sẽ bị kích hoạt liên tục và quyết liệt hơn để giải phóng RAM, cố gắng không để container vượt quá giới hạn và bị Docker Kill.
+      - GOGC=90 # Xác định tỷ lệ phần trăm tăng trưởng của bộ nhớ heap trước khi đợt thu gom rác tiếp theo được kích hoạt (mặc định là 100).
+      - TZ=Asia/Ho_Chi_Minh
+      - SERVER_PORT="8888"
+      - SERVER_PORT_TLS="8443"
+      - SERVER_SSE_PORT="8886"
+      - SERVER_SSE_PORT_TLS="8446"
+      # Local development TLS credentials (PEM content).
+      - TLS_CERT= |
+        -----BEGIN CERTIFICATE-----
+        MIIEVjCCAr6gAwIBAgIQBLHLN215TlB91k7qD1nqxTANBgkqhkiG9w0BAQsFADCB
+        hTEeMBwGA1UEChMVbWtjZXJ0IGRldmVsb3BtZW50IENBMS0wKwYDVQQLDCRoaWV1
+        dHJhbkBIaWV1cy1NQlAubG9jYWwgKEhpZXUgVHJhbikxNDAyBgNVBAMMK21rY2Vy
+        dCBoaWV1dHJhbkBIaWV1cy1NQlAubG9jYWwgKEhpZXUgVHJhbikwHhcNMjUxMTIy
+        MDgzMDQwWhcNMjgwMjIyMDgzMDQwWjBYMScwJQYDVQQKEx5ta2NlcnQgZGV2ZWxv
+        cG1lbnQgY2VydGlmaWNhdGUxLTArBgNVBAsMJGhpZXV0cmFuQEhpZXVzLU1CUC5s
+        b2NhbCAoSGlldSBUcmFuKTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEB
+        ALvWrAZXyGPRdFLGpm5N5w0yYdw49FKgLZsHM+TfQd68iChfdarVPKxusQ652ELU
+        3yKuZgvtyWQFQ+3J2FhyWyFoz5fbdkSM0BviHEqwb6/goD6oDRCxUlOWxQJwlAJg
+        pM6O17kVZIujO56wCdRFLSbWXal5oiDni1Y2+FMyH3e1qvctWOeOkfIe6enxbbGz
+        VyjthwSrt3gxhlL51k0VyVvzIhWkw3cFzbBv3sgZHvfrI//QxYsvjAEDLv0aTUTc
+        qUOYr4Ukh0p1JHf3AjHKZB0JSxVJu+NxBm9Tv7GgKoonKFQOwFmuIwtQMzjw4C5I
+        lPGb0uXYDT5VmbPBfJHDPIsCAwEAAaNuMGwwDgYDVR0PAQH/BAQDAgWgMBMGA1Ud
+        JQQMMAoGCCsGAQUFBwMBMB8GA1UdIwQYMBaAFKVMT13NSG8ZXwJiyFrjt71exNVz
+        MCQGA1UdEQQdMBuCCWxvY2FsaG9zdIIObG9jYWwuaHQ0Ny5jb20wDQYJKoZIhvcN
+        AQELBQADggGBAIFgHGax+DcMHzPDFVB4SD2MD+b7340hZwKKpwvu/raYfOg4C47M
+        bEhefzdvIUcNMt/ra4uRAeyZhBDhC//DvOMkUjuMv3RDkHfRI+r+63Y4xiCe076j
+        1b8hLYIVoyuY9RKZMGXsVxi1d/2YXCiNgWTLfSSCeuewcFxUwzqbkQI8fY0DKLTL
+        w3X4g4ifiIRrDWc90O/rs0HMBmPQxTQgR9g4lS5fP8otIPadTnVKR4mKpr8BeBtv
+        yFKnUWEAFZxM7ix1y5a4p421KNAu9L7roJmyDbqWlBRO3H7+DjJBYfj4bED+Xz5p
+        CVkdBxYfq0r/ZxE4+NMbtVfeBq+7ctQEzEehIe2OEfH1qNVQTT3poMM5kbvHcR6U
+        37qmex01rHFQImRbvuX3qThwQkU3Z3UH0eJdeXgXypTTFFVtyEwgGeDc8l7odkGc
+        TdgviMmi6MfGBFb1sU1nnvg91+xxkRUMhw6E78RXk616PmsndeVKqBGingjsxMZt
+        J4e232r9YihAfw==
+        -----END CERTIFICATE-----
+      - TLS_KEY= |
+        -----BEGIN PRIVATE KEY-----
+        MIIEwAIBADANBgkqhkiG9w0BAQEFAASCBKowggSmAgEAAoIBAQC71qwGV8hj0XRS
+        xqZuTecNMmHcOPRSoC2bBzPk30HevIgoX3Wq1TysbrEOudhC1N8irmYL7clkBUPt
+        ydhYclshaM+X23ZEjNAb4hxKsG+v4KA+qA0QsVJTlsUCcJQCYKTOjte5FWSLozue
+        sAnURS0m1l2peaIg54tWNvhTMh93tar3LVjnjpHyHunp8W2xs1co7YcEq7d4MYZS
+        +dZNFclb8yIVpMN3Bc2wb97IGR736yP/0MWLL4wBAy79Gk1E3KlDmK+FJIdKdSR3
+        9wIxymQdCUsVSbvjcQZvU7+xoCqKJyhUDsBZriMLUDM48OAuSJTxm9Ll2A0+VZmz
+        wXyRwzyLAgMBAAECggEBAInj51iorFSKeCgj6B1lVs4bRDeUH9df+tqpiPDk68gF
+        ArcQjKKh8u5qO9QhnZ5CAqPE/uiW4JZqPxmaaRVUrY1zEaHa25ErBcLSVA6IQxUL
+        gtc8KossgNEYBvvphN3R8Gop9jbKe4r+g0/UzwJi3eh6yTsWLWyWTXU22UjJrMwE
+        7sdQggo/sZkj/MtnYeVDJRhEn/jXjDLsG+nXn7o0XMxpl52lZZd2shKezLatFtUD
+        yUIZ1eSjrbn1HrB1qmM7jlxfoct3SK61/xirLCFlh1Fo0silz6DvuSQlX2DKXYTe
+        Cceqx1iz0v0iY197bp7k6pZsziob3CRVKLCvUFjKroECgYEAxAkGlXXMtIer3OnK
+        6G2K/kcJQV93tLd9ETV51Hxb5q0yGL+ffTY7/CnxEehH+GIoX59lYcoTBhDuRktb
+        vG6+/kh6NhRDaxK4OwsduJcI5PjN/INWU+3eLbgj8XfMfN5jgwpfEsIQnSBVnfLS
+        KhUrATCoiEuXPl0kW4Omm10eh+ECgYEA9UvJNetYwziB5ajJfVAioWF2UJPpejL9
+        nmLhJu+/dOn/Xj6BpOai1phArJlbA27ZbwazAyFtIvH+Jv8XMK26jvtB5tEBWwSQ
+        9dHlUdavMCkCYV4Ar6m4CngLGlat8HHXNp7PlAhB8q1HOeDzP2nnTea70hsWpF+V
+        cfai/SxIoesCgYEAuyX6uRka8oZLVr2Dzt01QofCmDxx5X7+0T0CMA8BFXnnR6U4
+        t6rdHWFVGcltW/0pmhBsEy19d98V+tnanEwF3nCG67XwnvniE8wK9byK6z10OUuR
+        UNLXt0ICXnYGLHeK/QEbvqayga7qzb2RUkefJKW1X1j67LizCwLmPZBqo0ECgYEA
+        ppdSztDIVsVgyvWH6hhrfIixjuX1ki1hO5lR6ly2/ZMSARKYf8K3YuDCQ7ZfLoSx
+        HQtCtmSUN0B8aEWknUXPxt1zk2vs7MC8JobnpF4WWrHvUOtDsgmk2U9P0xJ9TSgz
+        jn/q4FF/YG44SmGxMicdlTWX54jIJthXqa9kYGcb6QMCgYEAngJpPCVS2e1CLl3+
+        m6S8DO4GmK0JTvIPu7rh02mkwbw0SSqtmhqIGVs2D16XPzXkVhBG29CJDV5/vrmo
+        VKc/d9tCT1PeqvZAxHxjZr+RMTuDNn73xYTAuDXDfqWlAGpeWDwFJAevSZioUP8S
+        9h1+gR88VJwNpZjX34Z3Ff7oZLE=
+        -----END PRIVATE KEY-----
+    ports:
+      - "${SERVER_PORT:-8888}:8888"
+      - "${SERVER_PORT_TLS:-8443}:8443"
+      - "${SERVER_SSE_PORT:-8886}:8886"
+      - "${SERVER_SSE_PORT_TLS:-8446}:8446"

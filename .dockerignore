@@ -1,0 +1,9 @@
+.git
+.angular
+node_modules
+fe/node_modules
+fe/.angular
+data
+*.db
+*.db-shm
+*.db-wal

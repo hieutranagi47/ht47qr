@@ -2,17 +2,16 @@ package common
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"io/fs"
 
 	migrate "github.com/golang-migrate/migrate/v4"
-	pgxMigrate "github.com/golang-migrate/migrate/v4/database/pgx/v5"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	sqliteMigrate "github.com/golang-migrate/migrate/v4/database/sqlite3"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jackc/pgx/v5/stdlib"
+	_ "github.com/mattn/go-sqlite3"
 
 	"htqrcode/common/log"
 )
@@ -20,11 +19,14 @@ import (
 func MigrateDatabaseUp(
 	ctx context.Context,
 	moduleName string,
-	pool *pgxpool.Pool,
+	databaseURL string,
 	fs fs.FS,
 	migrationsDir string,
 ) error {
-	db := stdlib.OpenDBFromPool(pool)
+	db, err := sql.Open("sqlite3", databaseURL)
+	if err != nil {
+		return fmt.Errorf("could not open SQLite migration database: %w", err)
+	}
 	defer db.Close()
 
 	d, err := iofs.New(fs, migrationsDir)
@@ -32,25 +34,20 @@ func MigrateDatabaseUp(
 		return fmt.Errorf("could not create iofs driver: %w", err)
 	}
 
-	if _, err := db.ExecContext(ctx, "CREATE SCHEMA IF NOT EXISTS "+string(moduleName)); err != nil {
-		return fmt.Errorf("could not create schema %s: %w", moduleName, err)
-	}
-
-	migDb, err := pgxMigrate.WithInstance(db, &pgxMigrate.Config{
-		SchemaName:      string(moduleName),
-		MigrationsTable: "schema_migrations",
+	migDb, err := sqliteMigrate.WithInstance(db, &sqliteMigrate.Config{
+		DatabaseName:    string(moduleName),
+		MigrationsTable: string(moduleName) + "_schema_migrations",
 	})
 	if err != nil {
-		return fmt.Errorf("could not connect to pgx migrations database: %w", err)
+		return fmt.Errorf("could not connect to SQLite migrations database: %w", err)
 	}
 
-	m, err := migrate.NewWithInstance("iofs", d, "pgx", migDb)
+	m, err := migrate.NewWithInstance("iofs", d, "sqlite3", migDb)
 	if err != nil {
 		return fmt.Errorf("could not create migrate instance: %w", err)
 	}
 
-	// Release the dedicated database connection acquired by pgxMigrate.WithInstance.
-	// Without this, each MigrateDatabaseUp call leaks one pgxpool connection.
+	// Close the migration source and its dedicated database connection.
 	defer func() {
 		srcErr, dbErr := m.Close()
 		if srcErr != nil {

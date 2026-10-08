@@ -13,3 +13,7 @@ tasks:
     cmds:
       - go generate ./...
       - task: fmt
+
+  docker:
+    cmds:
+      - docker build -t htqrcode .

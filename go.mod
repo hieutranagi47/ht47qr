@@ -12,6 +12,7 @@ require (
 	github.com/labstack/echo/v5 v5.4.0
 	github.com/lithammer/shortuuid/v3 v3.0.7
 	github.com/makiuchi-d/gozxing v0.1.1
+	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/oapi-codegen/runtime v1.7.0
 	github.com/shopspring/decimal v1.5.0
 	github.com/stretchr/testify v1.12.1
