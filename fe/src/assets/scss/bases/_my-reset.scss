@@ -1,0 +1,80 @@
+@use "./../bases/colors" as *;
+@use "./../foundations/variables" as *;
+
+*,
+*::after,
+*::before {
+  box-sizing: border-box;
+}
+
+a,
+button,
+input,
+select,
+textarea {
+  &:focus-within {
+    outline-style: var(--#{$ds-prefix}-dse-outline-style, dashed);
+    outline-offset: var(--#{$ds-prefix}-dse-outline-offset, 0.3rem);
+    outline-width: var(--#{$ds-prefix}-dse-outline-width, 0.1rem);
+  }
+}
+
+a[href] {
+  color: inherit;
+  text-decoration: none;
+  &:not(.as-container) {
+    color: $link-color;
+
+    &:hover {
+      color: $link-hover-color;
+    }
+
+    &:active {
+      color: $link-active-color;
+    }
+  }
+}
+
+a {
+  text-underline-position: under;
+}
+
+// the highlight display when navigate by tab instead of click it by mouse.
+a:focus {
+  outline-color: transparent;
+}
+
+// highlight when navigate by tab key on keyboard.
+a:focus-visible {
+  outline-color: inherit !important;
+}
+
+p {
+  text-wrap-style: pretty;
+}
+
+// table with empty cell => hide the cell.
+td {
+  empty-cells: hide;
+}
+
+img {
+  max-width: 100%;
+  /** Make sure that the image keep the same ratio when we set width & height but different ratio */
+  height: auto;
+  /** The same behavior with display: block; to remove the margin bottom. */
+  vertical-align: middle;
+  /** Font of the alt when the image is broken*/
+  font-style: italic;
+  color: $neutral-300;
+
+  /** For blur image effect with low resolution image in background */
+  background-repeat: no-repeat;
+  background-size: cover;
+  shape-margin: 0.75rem;
+}
+
+// https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/text-box
+button {
+  text-box: trim-both cap alphabetic;
+}

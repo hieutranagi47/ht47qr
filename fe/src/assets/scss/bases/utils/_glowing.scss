@@ -1,0 +1,103 @@
+@use '../colors' as *;
+
+
+@property --clr-1 {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: red;
+}
+
+@property --clr-2 {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: orange;
+}
+
+@property --clr-3 {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: yellow;
+}
+
+@property --clr-4 {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: green;
+}
+
+@property --clr-5 {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: blue;
+}
+
+@property --clr-6 {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: indigo;
+}
+
+@property --clr-7 {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: violet;
+}
+
+@property --glow-deg {
+  syntax: '<angle>';
+  inherits: true;
+  initial-value: -90deg;
+}
+
+.glowing {
+  --gradient-glow: var(--clr-1), var(--clr-2), var(--clr-3), var(--clr-4), var(--clr-5), var(--clr-6), var(--clr-7), var(--clr-1); // start red -> end by red
+  --glow-intensity: 0.2;
+  --glow-size: 1.5rem;
+  position: relative;
+  border: 0.3rem solid transparent;
+  // Don't use border-image because we cannot apply border radius into border-image
+  border-radius: var(--round-size, 0.8rem);
+  background: linear-gradient($body-bg-color 0 0) padding-box,
+    conic-gradient(from var(--glow-deg), var(--gradient-glow)) border-box;
+  isolation: isolate; // create a new stack
+  animation: glowing-rotate 5s infinite linear;
+
+  &::after, &::before {
+    content: '';
+    position: absolute;
+    border-radius: 0.5rem; // 0.8 - 0.3 = 0.5rem
+  }
+
+  &::before {
+    background: linear-gradient($body-bg-color 0 0);
+    inset: 1rem;
+    z-index: -1;
+    filter: blur(var(--glow-size, 1.5rem));
+  }
+
+  &::after {
+    inset: -1rem;
+    z-index: -2; // follow the parent stack
+    background: conic-gradient(from var(--glow-deg), var(--gradient-glow));
+    opacity: var(--glow-intensity, 0.5);
+    filter: blur(var(--glow-size, 1.5rem));
+  }
+}
+
+@keyframes glowing-effect {
+  50% {
+    --clr-1: green;
+    --clr-2: blue;
+    --clr-3: indigo;
+    --clr-4: violet;
+    --clr-5: red;
+    --clr-6: orange;
+    --clr-7: yellow;
+  }
+}
+
+@keyframes glowing-rotate {
+  100% {
+    --glow-deg: 270deg;
+  }
+}

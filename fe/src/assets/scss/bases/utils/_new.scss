@@ -1,0 +1,10 @@
+// https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/content-visibility
+.content-visibility {
+  &--hidden {
+    content-visibility: hidden !important;
+  }
+
+  &--visible {
+    content-visibility: visible !important;
+  }
+}

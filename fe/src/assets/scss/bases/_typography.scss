@@ -1,0 +1,20 @@
+@use "./../foundations/variables" as *;
+
+$fw-100: var(--#{$ds-prefix}-dse-fw-100);
+$fw-200: var(--#{$ds-prefix}-dse-fw-200);
+$fw-300: var(--#{$ds-prefix}-dse-fw-300);
+$fw-400: var(--#{$ds-prefix}-dse-fw-400);
+$fw-500: var(--#{$ds-prefix}-dse-fw-500);
+$fw-600: var(--#{$ds-prefix}-dse-fw-600);
+$fw-700: var(--#{$ds-prefix}-dse-fw-700);
+$fw-800: var(--#{$ds-prefix}-dse-fw-800);
+$fw-900: var(--#{$ds-prefix}-dse-fw-900);
+
+$fs-10: var(--#{$ds-prefix}-dse-fs-10);
+$fs-12: var(--#{$ds-prefix}-dse-fs-12);
+$fs-14: var(--#{$ds-prefix}-dse-fs-14);
+$fs-16: var(--#{$ds-prefix}-dse-fs-16);
+$fs-18: var(--#{$ds-prefix}-dse-fs-18);
+$fs-24: var(--#{$ds-prefix}-dse-fs-24);
+$fs-36: var(--#{$ds-prefix}-dse-fs-36);
+$fs-48: var(--#{$ds-prefix}-dse-fs-48);

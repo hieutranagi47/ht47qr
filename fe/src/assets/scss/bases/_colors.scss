@@ -1,0 +1,113 @@
+@use "sass:map";
+@use "./../foundations/variables" as *;
+
+/*===========================================
+=           Global text colors              =
+===========================================*/
+// dse = Design System for Engineering
+$body-text-color: var(--#{$ds-prefix}-dse-body-text-color) !default;
+$body-bg-color: var(--#{$ds-prefix}-dse-body-bg-color, Canvas) !default; // Canvas => is the platform color if we don't declare the background color
+$body-bg-color-alpha: var(--#{$ds-prefix}-dse-body-bg-color-alpha) !default;
+
+$primary-color: var(--#{$ds-prefix}-dse-primary) !default;
+$primary-hover-color: var(--#{$ds-prefix}-dse-primary-400) !default;
+$primary-active-color: var(--#{$ds-prefix}-dse-primary-600) !default;
+$primary-text-color: var(--#{$ds-prefix}-dse-primary-text) !default;
+$primary-color-alpha: var(--#{$ds-prefix}-dse-primary-alpha) !default;
+$primary-text-color-alpha: var(--#{$ds-prefix}-dse-primary-text-alpha) !default;
+$primary-100-color: var(--#{$ds-prefix}-dse-primary-100) !default;
+$primary-200-color: var(--#{$ds-prefix}-dse-primary-200) !default;
+$primary-300-color: var(--#{$ds-prefix}-dse-primary-300) !default;
+$primary-400-color: var(--#{$ds-prefix}-dse-primary-400) !default;
+$primary-600-color: var(--#{$ds-prefix}-dse-primary-600) !default;
+$primary-700-color: var(--#{$ds-prefix}-dse-primary-700) !default;
+$primary-800-color: var(--#{$ds-prefix}-dse-primary-800) !default;
+$primary-900-color: var(--#{$ds-prefix}-dse-primary-900) !default;
+$primary-100-alpha: var(--#{$ds-prefix}-dse-primary-100-alpha) !default;
+$primary-100-text-color: var(--#{$ds-prefix}-dse-primary-100-text) !default;
+
+$secondary-color: var(--#{$ds-prefix}-dse-secondary) !default;
+$secondary-hover-color: var(--#{$ds-prefix}-dse-secondary-400) !default;
+$secondary-active-color: var(--#{$ds-prefix}-dse-secondary-600) !default;
+$secondary-text-color: var(--#{$ds-prefix}-dse-secondary-text) !default;
+$secondary-color-alpha: var(--#{$ds-prefix}-dse-secondary-alpha) !default;
+$secondary-text-color-alpha: var(
+  --#{$ds-prefix}-dse-secondary-text-alpha
+) !default;
+$secondary-100-color: var(--#{$ds-prefix}-dse-secondary-100) !default;
+$secondary-200-color: var(--#{$ds-prefix}-dse-secondary-200) !default;
+$secondary-300-color: var(--#{$ds-prefix}-dse-secondary-300) !default;
+$secondary-400-color: var(--#{$ds-prefix}-dse-secondary-400) !default;
+$secondary-600-color: var(--#{$ds-prefix}-dse-secondary-600) !default;
+$secondary-700-color: var(--#{$ds-prefix}-dse-secondary-700) !default;
+$secondary-800-color: var(--#{$ds-prefix}-dse-secondary-800) !default;
+$secondary-900-color: var(--#{$ds-prefix}-dse-secondary-900) !default;
+$secondary-100-alpha: var(--#{$ds-prefix}-dse-secondary-100-alpha) !default;
+$secondary-200-alpha: var(--#{$ds-prefix}-dse-secondary-200-alpha) !default;
+$secondary-300-alpha: var(--#{$ds-prefix}-dse-secondary-300-alpha) !default;
+$secondary-100-text-color: var(--#{$ds-prefix}-dse-secondary-100-text) !default;
+
+$accent-color: var(--#{$ds-prefix}-dse-accent) !default;
+$accent-hover-color: var(--#{$ds-prefix}-dse-accent-400) !default;
+$accent-active-color: var(--#{$ds-prefix}-dse-accent-600) !default;
+$accent-text-color: var(--#{$ds-prefix}-dse-accent-text) !default;
+$accent-color-alpha: var(--#{$ds-prefix}-dse-accent-alpha) !default;
+$accent-text-color-alpha: var(--#{$ds-prefix}-dse-accent-text-alpha) !default;
+$accent-100-color: var(--#{$ds-prefix}-dse-accent-100) !default;
+$accent-200-color: var(--#{$ds-prefix}-dse-accent-200) !default;
+$accent-300-color: var(--#{$ds-prefix}-dse-accent-300) !default;
+$accent-400-color: var(--#{$ds-prefix}-dse-accent-400) !default;
+$accent-600-color: var(--#{$ds-prefix}-dse-accent-600) !default;
+$accent-700-color: var(--#{$ds-prefix}-dse-accent-700) !default;
+$accent-800-color: var(--#{$ds-prefix}-dse-accent-800) !default;
+$accent-900-color: var(--#{$ds-prefix}-dse-accent-900) !default;
+
+$neutral-black: var(--#{$ds-prefix}-dse-neutral-black) !default;
+$neutral-white: var(--#{$ds-prefix}-dse-neutral-white) !default;
+$neutral-100: var(--#{$ds-prefix}-dse-neutral-100) !default;
+$neutral-200: var(--#{$ds-prefix}-dse-neutral-200) !default;
+$neutral-300: var(--#{$ds-prefix}-dse-neutral-300) !default;
+$neutral-400: var(--#{$ds-prefix}-dse-neutral-400) !default;
+$neutral-500: var(--#{$ds-prefix}-dse-neutral-500) !default;
+$neutral-600: var(--#{$ds-prefix}-dse-neutral-600) !default;
+$neutral-700: var(--#{$ds-prefix}-dse-neutral-700) !default;
+$neutral-800: var(--#{$ds-prefix}-dse-neutral-800) !default;
+$neutral-900: var(--#{$ds-prefix}-dse-neutral-900) !default;
+$neutral-100-alpha: var(--#{$ds-prefix}-dse-neutral-100-alpha) !default;
+$neutral-200-alpha: var(--#{$ds-prefix}-dse-neutral-200-alpha) !default;
+$neutral-300-alpha: var(--#{$ds-prefix}-dse-neutral-300-alpha) !default;
+$neutral-400-alpha: var(--#{$ds-prefix}-dse-neutral-400-alpha) !default;
+$neutral-500-alpha: var(--#{$ds-prefix}-dse-neutral-500-alpha) !default;
+$neutral-600-alpha: var(--#{$ds-prefix}-dse-neutral-600-alpha) !default;
+$neutral-700-alpha: var(--#{$ds-prefix}-dse-neutral-700-alpha) !default;
+$neutral-800-alpha: var(--#{$ds-prefix}-dse-neutral-800-alpha) !default;
+$neutral-900-alpha: var(--#{$ds-prefix}-dse-neutral-900-alpha) !default;
+$neutral-black-alpha: var(--#{$ds-prefix}-dse-neutral-black-alpha) !default;
+$neutral-white-alpha: var(--#{$ds-prefix}-dse-neutral-white-alpha) !default;
+
+$white-color: var(--#{$ds-prefix}-dse-white) !default;
+$white-color-alpha: var(--#{$ds-prefix}-dse-white-alpha) !default;
+$black-color: var(--#{$ds-prefix}-dse-black) !default;
+$black-color-alpha: var(--#{$ds-prefix}-dse-black-alpha) !default;
+
+/*** Buttons ***/
+$btn-primary-color: $primary-text-color !default;
+$btn-primary-bg: $primary-color !default;
+$btn-primary-hover-bg: $primary-hover-color !default;
+$btn-primary-active-bg: $primary-active-color !default;
+$btn-border-color: $primary-active-color !default;
+
+$btn-secondary-color: $secondary-text-color !default;
+$btn-secondary-bg: $secondary-color !default;
+$btn-secondary-hover-bg: $secondary-hover-color !default;
+$btn-secondary-active-bg: $secondary-active-color !default;
+$btn-secondary-border-color: $secondary-active-color !default;
+
+$link-color: $secondary-800-color !default;
+$link-hover-color: $secondary-700-color !default;
+$link-active-color: $secondary-900-color !default;
+
+$error-color: var(--#{$ds-prefix}-dse-error) !default;
+$success-color: var(--#{$ds-prefix}-dse-success) !default;
+$warning-color: var(--#{$ds-prefix}-dse-warning) !default;
+$info-color: var(--#{$ds-prefix}-dse-info) !default;

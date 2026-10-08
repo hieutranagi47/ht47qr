@@ -1,0 +1,198 @@
+openapi: 3.0.3
+info:
+  title: QR Code API
+  version: 1.0.0
+  description: OpenAPI contract for qr-code-api routes.
+servers:
+  - url: /
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      tags: [system]
+      summary: Health check
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK
+        default:
+          description: Safe JSON error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/very-first-api:
+    get:
+      operationId: getV1VeryFirstApi
+      tags: [v1]
+      summary: Sample hello API
+      responses:
+        "200":
+          description: Plain text response
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: My Handler v1
+        default:
+          description: Safe JSON error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/generate-qrcode:
+    post:
+      operationId: postV1GenerateQrCode
+      tags: [v1, qrcode]
+      summary: Generate QR code from form data
+      description: Requests are limited to 8 MiB; output dimensions are limited to 4096x4096 pixels. Circle mode takes precedence over custom shape and halftone options.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [data]
+              properties:
+                data:
+                  type: string
+                  description: JSON-encoded MessageRequest. Unknown or omitted types use the text field.
+                  example: '{"type":"text","text":"https://example.com"}'
+                logo_img:
+                  type: string
+                  format: binary
+                  description: Optional PNG/JPEG logo (up to 1 MiB and 500x500 pixels).
+                halftone_img:
+                  type: string
+                  format: binary
+                  description: Optional PNG/JPEG halftone (up to 5 MiB and 4096x4096 pixels). Ignored in circle mode.
+                qr_width:
+                  type: string
+                  description: Optional QR width (6–255).
+                border_width:
+                  type: string
+                  description: Optional border width (0–1024).
+                is_circle_shape:
+                  type: string
+                  description: Optional boolean string for circle shape mode.
+                is_custom_shape:
+                  type: string
+                  description: Optional boolean string for custom shape mode.
+                foreground_color:
+                  type: string
+                  description: Optional six-digit RGB hex foreground color, with or without a leading hash.
+      responses:
+        "200":
+          description: Generated QR image stream
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal processing error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        default:
+          description: Safe JSON error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      x-go-type: common.HttpErrorResponse
+      x-go-type-import:
+        path: htqrcode/common
+        name: common
+      required: [message, slug, details]
+      properties:
+        message:
+          type: string
+        slug:
+          type: string
+        details:
+          type: array
+          items:
+            $ref: "#/components/schemas/ErrorDetail"
+    ErrorDetail:
+      type: object
+      x-go-type: common.HttpErrorDetail
+      x-go-type-import:
+        path: htqrcode/common
+        name: common
+      required: [entity_type, entity_id, error_slug, message]
+      properties:
+        entity_type:
+          type: string
+        entity_id:
+          type: string
+        error_slug:
+          type: string
+        message:
+          type: string
+
+    MessageRequest:
+      type: object
+      description: Fields are required according to type. wifi needs wifi_name/password; sms needs phone_number/message; mail and mailto need email/subject/body; geo needs latitude/longitude; tel needs phone_number; contact needs name/phone/email; vcard also needs organization/title/address/website; calendar and ical need summary/start_time/end_time; text needs text.
+      properties:
+        type:
+          type: string
+        wifi_name:
+          type: string
+        password:
+          type: string
+        phone_number:
+          type: string
+        message:
+          type: string
+        email:
+          type: string
+        subject:
+          type: string
+        body:
+          type: string
+        latitude:
+          type: string
+        longitude:
+          type: string
+        label:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+        organization:
+          type: string
+        title:
+          type: string
+        address:
+          type: string
+        website:
+          type: string
+        summary:
+          type: string
+        location:
+          type: string
+        description:
+          type: string
+        start_time:
+          type: string
+        end_time:
+          type: string
+        text:
+          type: string

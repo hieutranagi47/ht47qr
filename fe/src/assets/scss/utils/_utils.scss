@@ -1,0 +1,123 @@
+@use "sass:map";
+@use "./../foundations/variables" as *;
+@use "./../mixins/general" as *;
+@use "./../mixins/breakpoints" as *;
+@use "./../bases/config" as *;
+@use "./../bases/colors" as *;
+
+%min-height-is-viewport-height-with-header {
+  min-height: calc($viewport-height - $header-height-m);
+}
+
+//https://stackoverflow.com/questions/3461441/prevent-flicker-on-webkit-transition-of-webkit-transform?noredirect=1&lq=1
+%prevent-blink-flickering {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-transform: translateZ(0) scale(1, 1);
+  transform: translateZ(0) scale(1, 1);
+  // add more
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  perspective: 1000;
+  -webkit-perspective: 1000;
+}
+
+%modal-close {
+  height: 4rem;
+  width: 4rem;
+  position: relative;
+  background-color: transparent;
+  border: 0;
+  padding: 0;
+  outline: 0;
+  border-radius: 50%;
+  color: var(--danger);
+
+  &::before {
+    content: "\2715";
+    position: absolute !important;
+    color: inherit;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    font-size: $icon-size;
+    line-height: 1;
+    transition: transform 0.3s linear;
+  }
+
+  &:hover {
+    background-color: var(--light-gray);
+
+    &::before {
+      transform: translateX(-50%) translateY(-50%) scale(0.6);
+    }
+  }
+}
+
+%btn-close {
+  position: relative;
+  width: 3rem;
+  height: 3rem;
+  display: inline-block;
+  background-color: transparent;
+  border: 0;
+  padding: 0;
+  outline: 0;
+  cursor: pointer;
+
+  &::after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 1px;
+    background-color: var(--white);
+    top: 50%;
+    transform: rotate(-45deg) scale(0.7);
+    transition: transform 0.2s linear;
+  }
+
+  &::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 1px;
+    background-color: var(--white);
+    top: 50%;
+    transform: rotate(45deg) scale(0.7);
+    transition: transform 0.2s linear;
+  }
+
+  &:hover {
+    &::after {
+      transform: rotate(-45deg) scale(0.61);
+    }
+
+    &::before {
+      transform: rotate(45deg) scale(0.61);
+    }
+  }
+}
+
+%text-one-line {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+%reset-a {
+  text-decoration: none;
+  color: inherit;
+  cursor: hand;
+  cursor: pointer;
+}
+
+%prevent-selection {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  -o-user-select: none !important;
+  user-select: none !important;
+}
+
+%box-shadow {
+  filter: drop-shadow(0 0 0.6rem $secondary-100-color);
+}

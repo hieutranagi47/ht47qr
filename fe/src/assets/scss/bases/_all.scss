@@ -1,0 +1,22 @@
+
+@use './../foundations/variables' as *;
+@use './root' as *;
+@use './reset' as *;
+@use './my-reset' as *;
+
+@use './../mixins/general' as *;
+@use './../mixins/breakpoints' as *;
+@use './../bases/colors' as *;
+
+@use './utils/common' as *;
+@use './utils/container' as *;
+@use './utils/spaces' as *;
+@use './utils/typography' as *;
+@use './utils/overflows' as *;
+@use './utils/displays' as *;
+@use './utils/glowing' as *;
+
+@use './../atoms/button/index' as *;
+@use './../atoms/input/index' as *;
+// Apply the custom theme for child projects.
+// @include sysDesignDefaultTheme($primaryColorPalettes, $secondaryColorPalettes, $accentColorPalettes);

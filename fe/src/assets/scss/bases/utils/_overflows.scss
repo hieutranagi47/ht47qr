@@ -1,0 +1,9 @@
+@use './../../foundations/variables' as *;
+
+@if ($enable-overflow-classes) {
+  @each $overflow, $value in $overflows {
+    .overflow-#{$overflow} {
+      overflow: $value;
+    }
+  }
+}

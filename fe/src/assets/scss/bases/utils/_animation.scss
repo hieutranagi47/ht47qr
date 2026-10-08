@@ -1,0 +1,22 @@
+
+.rotate-y {
+  transform: rotateY(var(--rotate-y));
+  transition: transform 1s ease-in-out;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+
+@keyframes rollAround {
+  0% {
+    --rotate-y: -360deg;
+  }
+  50% {
+    --rotate-y: -1deg;
+  }
+  51% {
+    --rotate-y: 0deg;
+  }
+  100% {
+    --rotate-y: 0deg;
+  }
+}

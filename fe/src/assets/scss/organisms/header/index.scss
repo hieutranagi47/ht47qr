@@ -1,0 +1,50 @@
+@use 'sass:color';
+@use './../../bases/colors' as *;
+
+$header-height: 6.4rem;
+
+.header {
+  position: relative;
+  margin-bottom: $header-height;
+}
+
+.header-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 9999;
+  backdrop-filter: blur(6rem);
+}
+
+.main-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: $header-height;
+}
+
+.logo {
+  img {
+    height: 4rem;
+  }
+}
+
+
+@at-root body.dark {
+  img {
+    filter: invert(1) drop-shadow(0 0 0.01 $white-color);
+  }
+}
+
+.nav-list {
+  list-style: none;
+}
+
+.nav-link {
+  color: $body-text-color !important;
+}
+
+.header-container {
+  // background-color: hsla($neutral-600-alpha, 0.8);
+}

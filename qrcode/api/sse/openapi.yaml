@@ -1,0 +1,57 @@
+openapi: "3.0.3"
+info:
+  title: QRCode SSE heartbeat
+  version: "1.0.0"
+servers:
+  - url: /sse
+paths:
+  /qrcode/heartbeat:
+    get:
+      operationId: getHeartbeat
+      responses:
+        "200":
+          description: Live connection comments every 15 seconds; no replay or application messages
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        default:
+          description: Safe JSON error before the stream is opened
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      x-go-type: common.HttpErrorResponse
+      x-go-type-import:
+        path: htqrcode/common
+        name: common
+      required: [message, slug, details]
+      properties:
+        message:
+          type: string
+        slug:
+          type: string
+        details:
+          type: array
+          items:
+            $ref: "#/components/schemas/ErrorDetail"
+    ErrorDetail:
+      type: object
+      x-go-type: common.HttpErrorDetail
+      x-go-type-import:
+        path: htqrcode/common
+        name: common
+      required: [entity_type, entity_id, error_slug, message]
+      properties:
+        entity_type:
+          type: string
+        entity_id:
+          type: string
+        error_slug:
+          type: string
+        message:
+          type: string

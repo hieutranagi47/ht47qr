@@ -1,0 +1,54 @@
+syntax = "proto3";
+package htqrcode.qrcode.v1;
+option go_package = "htqrcode/qrcode/api/grpc;grpcapi";
+
+service QRCodeService {
+  rpc GenerateQRCode(GenerateQRCodeRequest) returns (GenerateQRCodeResponse);
+}
+// Fields required for each type match the REST MessageRequest contract.
+// Unknown or omitted types use text.
+message MessageRequest {
+  string type = 1;
+  string wifi_name = 2;
+  string password = 3;
+  string phone_number = 4;
+  string message = 5;
+  string email = 6;
+  string subject = 7;
+  string body = 8;
+  string latitude = 9;
+  string longitude = 10;
+  string label = 11;
+  string name = 12;
+  string phone = 13;
+  string organization = 14;
+  string title = 15;
+  string address = 16;
+  string website = 17;
+  string summary = 18;
+  string location = 19;
+  string description = 20;
+  string start_time = 21;
+  string end_time = 22;
+  string text = 23;
+}
+// Omitted width and border default to 10. Explicit border_width=0 is supported.
+// Circle mode takes precedence over custom shape and halftone options.
+message Options {
+  optional uint32 qr_width = 1; // 6-255
+  optional uint32 border_width = 2; // 0-1024
+  bool is_circle_shape = 3;
+  bool is_custom_shape = 4;
+  string foreground_color = 5; // Six-digit RGB hex, optional leading hash.
+  bytes logo_img = 6; // PNG/JPEG, at most 1 MiB and 500x500 pixels.
+  bytes halftone_img = 7; // PNG/JPEG, at most 5 MiB and 4096x4096 pixels.
+}
+// Serialized requests are limited to 8 MiB; output is at most 4096x4096 pixels.
+message GenerateQRCodeRequest {
+  MessageRequest message = 1;
+  Options options = 2;
+}
+message GenerateQRCodeResponse {
+  bytes image = 1;
+  string content_type = 2; // image/png
+}

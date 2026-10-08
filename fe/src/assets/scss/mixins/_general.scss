@@ -1,0 +1,1286 @@
+@use './../foundations/variables' as *;
+@use './../bases/colors' as *;
+@use './breakpoints' as *;
+@use './../bases/config' as *;
+
+/** BEGIN: Browser hack */
+
+@mixin firefox() {
+  @-moz-document url-prefix() {
+    @content;
+  }
+}
+
+@mixin latest-firefox() {
+  @supports (-moz-appearance: none) {
+    @content;
+  }
+}
+
+@mixin modern-attr() {
+  // @supports (x: attr(x type(*))) {
+  //   /* Browser has modern attr() support */
+  //   @content;
+  // }
+  @supports (content: attr(data-content string)) {
+    /* Browser has modern attr() support */
+    @content;
+  }
+}
+
+@mixin old-attr() {
+  // @supports not (x: attr(x type(*))) {
+  //   /* Browser does not have modern attr() support */
+  //   @content;
+  // }
+  @supports not (content: attr(data-content string)) {
+    /* Browser has modern attr() support */
+    @content;
+  }
+}
+
+/** For IE 10 & 11 */
+@mixin ie() {
+  @media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+    @content;
+  }
+}
+
+/** For IE 8+ */
+@mixin ie8up {
+  @media screen\0 {
+    @content;
+  }
+}
+
+@mixin ie7down() {
+  @media screen\9 {
+    @content;
+  }
+}
+
+@mixin webkit() {
+  @media screen and (-webkit-min-device-pixel-ratio: 0) {
+    @content;
+  }
+}
+
+/** IE <= 11 doesn't support nester media queries. */
+@mixin none-ie() {
+  @media all {
+    @media all {
+      @content;
+    }
+  }
+}
+
+/** END: Browser hack */
+
+@mixin landscape() {
+  @media (orientation: landscape) {
+    @content;
+  }
+}
+
+@mixin portrait() {
+  @media (orientation: portrait) {
+    @content;
+  }
+}
+
+@mixin width($width) {
+  @media (width: $width) {
+    @content;
+  }
+}
+
+@mixin minwidth($width) {
+  @media (min-width: $width) {
+    @content;
+  }
+}
+
+@mixin maxwidth($width) {
+  @media (max-width: $width) {
+    @content;
+  }
+}
+
+@mixin height($height) {
+  @media (height: $height) {
+    @content;
+  }
+}
+
+@mixin min-height($height) {
+  @media (min-height: $height) {
+    @content;
+  }
+}
+
+@mixin maxheight($height) {
+  @media (max-height: $height) {
+    @content;
+  }
+}
+
+@mixin min-width-or-height($width, $height) {
+  @media screen and (min-width: $width), screen and (min-height: $height) {
+    @content;
+  }
+}
+
+@mixin min-width-and-height($width, $height) {
+  @media screen and (min-width: $width) and (min-height: $height) {
+    @content;
+  }
+}
+
+@mixin aspect-ratio($ratio) {
+  @media (aspect-ratio: $ratio) {
+    @content;
+  }
+}
+
+@mixin min-aspect-ratio($ratio) {
+  @media (min-aspect-ratio: $ratio) {
+    @content;
+  }
+}
+
+@mixin max-aspect-ratio($ratio) {
+  @media (max-aspect-ratio: $ratio) {
+    @content;
+  }
+}
+
+/** https://developer.mozilla.org/en-US/docs/Web/CSS/@media/pointer
+* https://css-tricks.com/touch-devices-not-judged-size/
+* The pointer feature is specified as a keyword value chosen from the list below.
+*    none
+*        The primary input mechanism does not include a pointing device.
+*    coarse
+*        The primary input mechanism includes a pointing device of limited accuracy.
+*    fine
+*        The primary input mechanism includes an accurate pointing device.
+/* Value is: none, coarse (for finger), or fine (for mouse) */
+@mixin media-pointer($pointerType: none) {
+  @media (pointer: $pointerType) {
+    @content;
+  }
+}
+
+/**$pointerType: string.
+*   coarse:
+*       At least one input mechanism of the device 
+*       includes a pointing device of limited accuracy.
+*   fine:
+*       At least one input mechanism of the device 
+*       includes an accurate pointing device.
+*   none:
+*       The device does not include any pointing device.
+*/
+@mixin any-pointer($pointerType) {
+  @media (any-pointer: $pointerType) {
+    @content;
+  }
+}
+
+/**
+* https://css-tricks.com/touch-devices-not-judged-size/
+* $pointerType: string.
+* Description: A good use of this query is a drop-down menu.
+*   hover:
+*       Primary input mechanism system can 
+*       hover over elements with ease
+*   none:
+*       Primary input mechanism cannot hover 
+*       at all or cannot conveniently hover 
+*       (e.g., many mobile devices emulate hovering
+*       when the user performs an inconvenient long tap), 
+*       or there is no primary pointing input mechanism
+*/
+@mixin hover($hoverType: hover) {
+  @media (hover: $hoverType) {
+    &:hover {
+      @content;
+    }
+  }
+}
+
+/**$pointerType: string.
+*   hover:
+*       One or more available input mechanism(s) can hover over elements with ease
+*   on-demand:
+*       One or more available input mechanism(s) can hover, 
+*       but not easily (e.g., many mobile devices emulate 
+*       hovering when the user performs a long tap)
+*   none:
+*       One or more available input mechanism(s) cannot 
+*       hover (or there are no pointing input mechanisms)
+*/
+@mixin any-hover($hoverType: hover) {
+  @media (any-hover: $hoverType) {
+    @content;
+  }
+}
+
+/* Value is: dark, light, or no-preference */
+@mixin system-mode($theme) {
+  @media (prefers-color-scheme: $theme) {
+    :root {
+      @content;
+    }
+  }
+}
+
+/**
+@include is(header, main, footer) {
+  p:hover { color: red;}
+}
+*/
+@mixin is($elm...) {
+  :is(#{$elm}),
+  :matches(#{$elm}),
+  :any(#{$elm}),
+  :-webkit-any(#{$elm}),
+  :-moz-any(#{$elm}) {
+    @content;
+  }
+}
+
+@mixin transition($attr...) {
+  -webkit-transition: $attr;
+  -moz-transition: $attr;
+  -ms-transition: $attr;
+  -o-transition: $attr;
+  transition: $attr;
+}
+
+@mixin transform($attr...) {
+  -webkit-transform: $attr;
+  -moz-transform: $attr;
+  -ms-transform: $attr;
+  -o-transform: $attr;
+  transform: $attr;
+}
+
+@mixin flexbox($important: false) {
+  @if $important {
+    display: -webkit-box !important;
+    display: -moz-box !important;
+    display: -ms-flexbox !important;
+    display: -webkit-flex !important;
+    display: flex !important;
+  } @else {
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+  }
+
+  @content;
+}
+
+@mixin inline-flexbox() {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-inline-flex;
+  display: inline-flex;
+  @content;
+}
+
+@mixin flex($values: 0 1 auto) {
+  -webkit-box-flex: $values;
+  -moz-box-flex: $values;
+  -webkit-flex: $values;
+  -ms-flex: $values;
+  flex: $values;
+  @content;
+}
+
+@mixin truncate($lines: 1) {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: $lines;
+  overflow: hidden;
+}
+
+@mixin truncate-fallback($lines: 1) {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+
+  @supports (-webkit-line-clamp: 2) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: initial;
+    display: -webkit-box;
+    -webkit-line-clamp: $lines;
+    -webkit-box-orient: vertical;
+  }
+}
+
+@mixin flex-calc($flex-grow: 0, $flex-shrink: 1, $flex-basis: auto) {
+  -webkit-flex-grow: $flex-grow;
+  -moz-flex-grow: $flex-grow;
+  flex-grow: $flex-grow;
+  -webkit-flex-shrink: $flex-shrink;
+  -moz-flex-shrink: $flex-shrink;
+  flex-shrink: $flex-shrink;
+  -webkit-flex-basis: $flex-basis;
+  -moz-flex-basis: $flex-basis;
+  flex-basis: $flex-basis;
+  @content;
+}
+
+@mixin order($val) {
+  -webkit-box-ordinal-group: $val;
+  -moz-box-ordinal-group: $val;
+  -ms-flex-order: $val;
+  -webkit-order: $val;
+  order: $val;
+}
+
+@mixin space-evenly {
+  justify-content: space-evenly;
+
+  @include ie() {
+    justify-content: space-around;
+  }
+}
+
+@mixin filter($attr...) {
+  -webkit-filter: $attr;
+  -moz-filter: $attr;
+  -o-filter: $attr;
+  -ms-filter: $attr;
+  filter: $attr;
+}
+
+@mixin prevent-select() {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+
+  & > *,
+  & > *::after,
+  &::before {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@mixin bg-color($bgColor: $body-bg, $textColor: inherit) {
+  background-color: $bgColor;
+
+  @if ($textColor==inherit) {
+    @if (lightness($bgColor) > 70%) {
+      color: $neutral-700;
+    } @else {
+      color: $neutral-100;
+    }
+  } @else {
+    color: $textColor;
+  }
+}
+
+@mixin bgcover(
+  $url: null,
+  $bgAttachment: scroll,
+  $bgColor: $black,
+  $bgOrigin: padding-box,
+  $bgClip: border-box
+) {
+  @if ($url) {
+    background-image: url($url);
+  } @else {
+    background-image: unset;
+  }
+
+  background-color: $bgColor;
+  background-position: center;
+
+  background-size: cover; // auto (default)|100px 100px|100% 100%|cover|contain|initial|inherit;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+
+  background-repeat: no-repeat;
+  background-origin: $bgOrigin; // padding-box|border-box|content-box|initial|inherit;
+  background-clip: $bgClip; // border-box|padding-box|content-box|initial|inherit;
+  background-attachment: $bgAttachment; // scroll|fixed|local|initial|inherit;
+}
+
+@mixin bg(
+  $url: null,
+  $bgColor: $black,
+  $bgPosition: 0% 0%,
+  $bgSize: auto,
+  $bgRepeat: repeat,
+  $bgAttachment: scroll,
+  $bgOrigin: padding-box,
+  $bgClip: border-box
+) {
+  @if ($url) {
+    background-image: url($url);
+  } @else {
+    background-image: unset;
+  }
+
+  background-color: $bgColor;
+
+  // background-blend-mode: normal|multiply|screen|overlay|darken|lighten|color-dodge|saturation|color|luminosity;
+
+  /** background-position: 0% 0%; Default.
+    * left top|left center|left bottom|right top|right center|right bottom|
+    * center top|center center|center bottom|
+    * x% y% (50% 50%)|xpos ypos (10px 200px)|initial|inherit
+    */
+  background-position: $bgPosition;
+
+  background-size: $bgSize; // auto (default)|100px 100px|100% 100%|auto|contain|initial|inherit;
+  -webkit-background-size: $bgSize;
+  -moz-background-size: $bgSize;
+  -o-background-size: $bgSize;
+
+  background-repeat: $bgRepeat; //repeat (default)|repeat-x|repeat-y|no-repeat|round|space|initial|inherit;
+  /** bg-origin: This property has no effect if background-attachment is "fixed". */
+  background-origin: $bgOrigin; // padding-box|border-box|content-box|initial|inherit;
+  background-clip: $bgClip; // border-box|padding-box|content-box|initial|inherit;
+  background-attachment: $bgAttachment; // scroll|fixed|local|initial|inherit;
+}
+
+@mixin parallax($bgImgUrl: null, $pos: center, $size: cover) {
+  /* The image used */
+  @if ($bgImgUrl) {
+    background-image: url(#{$bgImgUrl});
+  }
+
+  /* Set a specific height */
+  min-height: 50rem;
+
+  /* Create the parallax scrolling effect */
+  background-attachment: fixed !important;
+  background-position: $pos;
+  background-repeat: no-repeat;
+  background-size: $size;
+}
+
+@mixin sticky-position {
+  position: fixed;
+
+  @supports (position: sticky) {
+    position: sticky;
+  }
+}
+
+@mixin placeholder($color: $primary-text-color, $f-style: false) {
+  &::-webkit-input-placeholder {
+    /* Chrome */
+    color: $color;
+    transition: opacity 250ms ease-in-out;
+    font-weight: 300;
+    opacity: 0.68;
+
+    @if $f-style {
+      font-style: italic;
+    }
+  }
+
+  &:-ms-input-placeholder {
+    /* IE 10+ */
+    color: $color;
+    transition: opacity 250ms ease-in-out;
+    font-weight: 300;
+
+    @if $f-style {
+      font-style: italic;
+    }
+  }
+
+  &::-moz-placeholder {
+    /* Firefox 19+ */
+    color: $color;
+    opacity: 0.68;
+    transition: opacity 250ms ease-in-out;
+    font-weight: 300;
+
+    @if $f-style {
+      font-style: italic;
+    }
+  }
+
+  &:-moz-placeholder {
+    /* Firefox 4 - 18 */
+    color: $color;
+    opacity: 0.68;
+    transition: opacity 250ms ease-in-out;
+    font-weight: 300;
+
+    @if $f-style {
+      font-style: italic;
+    }
+  }
+
+  &:focus::-webkit-input-placeholder {
+    opacity: 0.47;
+  }
+
+  &:focus:-ms-input-placeholder {
+    opacity: 0.47;
+  }
+
+  &:focus::-moz-placeholder {
+    opacity: 0.47;
+  }
+
+  &:focus:-moz-placeholder {
+    opacity: 0.47;
+  }
+}
+
+//http://mladenplavsic.github.io/css-ripple-effect @ modify by Hieu Tran
+@mixin ripple-effect() {
+  overflow: hidden;
+  transform: translate3d(0, 0, 0);
+  overflow: hidden;
+
+  &:after {
+    content: '';
+    position: absolute;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    background-image: radial-gradient(circle, $neutral-white 10%, transparent 10.01%);
+    background-repeat: no-repeat;
+    background-position: 50%;
+    transform: scale(10, 10);
+    opacity: 0;
+    transition: transform 0.4s, opacity 0.8s;
+  }
+
+  &:active:not(:disabled) {
+    &:after {
+      transform: scale(0, 0);
+      opacity: 0.3;
+      transition: 0s;
+    }
+  }
+}
+
+@mixin ht-btn(
+  $bgColor,
+  $color,
+  $borderRadius: 0px,
+  $borderColor: null,
+  $padding: 1rem 1.6rem,
+  $borderWidth: 0.2rem,
+  $fontSize: 1.6rem
+) {
+  background-color: $bgColor;
+  color: $color;
+
+  @if ($borderColor) {
+    border: $borderWidth solid $borderColor;
+  } @else {
+    border: $borderWidth solid $bgColor;
+  }
+
+  font-size: $fontSize;
+  font-weight: 700;
+  line-height: 1;
+  padding: $padding;
+  margin-bottom: 10px;
+  position: relative;
+  cursor: hand;
+  cursor: pointer;
+
+  * {
+    cursor: inherit;
+  }
+
+  border-radius: $borderRadius;
+  min-width: 80px;
+  @extend .ripple-effect !optional;
+  @content;
+
+  &:hover {
+    color: $color;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: $bgColor !important;
+    color: $color !important;
+
+    @if ($borderColor) {
+      border-color: $borderColor !important;
+    } @else {
+      border-color: $bgColor !important;
+    }
+  }
+
+  &:focus {
+    color: $color;
+  }
+
+  &:active:not(:disabled) {
+    background-color: $bgColor !important;
+
+    @if ($borderColor) {
+      border-color: $borderColor !important;
+    } @else {
+      border-color: $bgColor !important;
+    }
+
+    color: $color !important;
+    box-shadow: unset;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+@mixin ht-btn-overlay(
+  $bgColor,
+  $color,
+  $borderRadius: 0px,
+  $borderColor: null,
+  $padding: 10px 16px,
+  $borderWidth: 2px,
+  $fontSize: 16px
+) {
+  background-color: hsla($bgColor, 0.87);
+  color: hsla($color: $color, $alpha: 0.87);
+
+  @if ($borderColor) {
+    border: $borderWidth solid hsla($borderColor, 0.27);
+  } @else {
+    border: $borderWidth solid hsla($bgColor, 0.27);
+  }
+
+  font-size: $fontSize;
+  line-height: 1;
+  padding: $padding;
+  margin-bottom: 10px;
+  position: relative;
+  cursor: hand;
+  cursor: pointer;
+  border-radius: $borderRadius;
+  min-width: 80px;
+  @extend .ripple-effect;
+  @content;
+
+  &:hover {
+    color: $color;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: $bgColor !important;
+    color: $color !important;
+
+    @if ($borderColor) {
+      border-color: $borderColor !important;
+    } @else {
+      border-color: $bgColor !important;
+    }
+  }
+
+  &:focus {
+    color: $color;
+  }
+
+  &:active:not(:disabled) {
+    background-color: $bgColor !important;
+
+    @if ($borderColor) {
+      border-color: $borderColor !important;
+    } @else {
+      border-color: $bgColor !important;
+    }
+
+    color: $color !important;
+    box-shadow: unset;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+@keyframes btnEffect {
+  from {
+    background: radial-gradient(rgba(var(--dse-white-rgb), 0.3) 8%, transparent 8.01%);
+  }
+
+  to {
+    background: radial-gradient(rgba(var(--dse-white-rgb), 0.3) 90%, transparent 90.01%);
+  }
+}
+
+@mixin btn-close($size: 16px, $color: $white-color, $hoverCOlor: $error-color, $weight: 'light') {
+  position: relative;
+  line-height: $size;
+  width: $size;
+  height: $size;
+
+  &::before {
+    @if ($weight== 'bold') {
+      content: '\274C';
+    } @else if ($weight== 'normal') {
+      content: '\2716';
+    } @else {
+      content: '\2715';
+    }
+
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: $size;
+    width: $size;
+    font-size: $size;
+    color: $color;
+    cursor: hand;
+    cursor: pointer;
+    padding: 0.2rem 0 0 0.2rem;
+  }
+
+  &:hover {
+    &::before {
+      color: $hoverCOlor;
+    }
+  }
+
+  &:active {
+    &::before {
+      padding: 0.3rem 0 0 3px;
+    }
+  }
+}
+
+@mixin scrollbar(
+  $color: $neutral-700,
+  $bgColor: $neutral-100,
+  $barWidth: 6px,
+  $borderRadius: 0,
+  $hover2Display: null
+) {
+  scrollbar-gutter: auto;
+  /* BEGIN: Firefox 64+ */
+  scrollbar-color: $color $bgColor;
+  scrollbar-width: none;
+
+  @include media-breakpoint-up(lg) {
+    scrollbar-width: thin;
+  }
+
+  /* END: Firefox 64+ */
+
+  scroll-behavior: smooth;
+  scrollbar-face-color: $color;
+  scrollbar-shadow-color: $color;
+  scrollbar-highlight-color: $color;
+  scrollbar-3dlight-color: $color;
+  scrollbar-darkshadow-color: hsla($color, 0.47);
+  scrollbar-track-color: $bgColor;
+  scrollbar-arrow-color: $color;
+  -ms-overflow-style: -ms-autohiding-scrollbar;
+
+  @if ($barWidth==0 or $barWidth==0px) {
+    -ms-overflow-style: none;
+    overflow: -moz-scrollbars-none;
+  }
+
+  &::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+
+    @include media-breakpoint-up(lg) {
+      width: $barWidth;
+      height: $barWidth;
+    }
+
+    background: $bgColor;
+
+    @if ($hover2Display !=null) {
+      display: none;
+    }
+  }
+
+  @if ($hover2Display !=null) {
+    &:hover {
+      &::-webkit-scrollbar {
+        display: inherit;
+      }
+    }
+  }
+
+  &::-webkit-scrollbar-button {
+    display: none;
+    height: 0;
+    width: 0;
+
+    @include media-breakpoint-up(lg) {
+      width: $barWidth;
+      height: $barWidth;
+    }
+
+    background-color: $color;
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: $bgColor;
+  }
+
+  &::-webkit-scrollbar-track-piece {
+    background-color: $bgColor;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: hsla($color, 0.87);
+    border-radius: $borderRadius;
+    -webkit-border-radius: $borderRadius;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: hsla($color, 1);
+    border-radius: $borderRadius;
+    -webkit-border-radius: $borderRadius;
+  }
+
+  &::-webkit-scrollbar-corner {
+    background-color: $color;
+  }
+
+  &::-webkit-resizer {
+    background-color: $bgColor;
+    color: $color;
+  }
+}
+
+@mixin input-range(
+  $thumbColor: $primary-color,
+  $thumbSize: 2rem,
+  $thumbRadius: 50%,
+  $trackColor: $neutral-200,
+  $trackSize: 0.8rem,
+  $trackRadius: 1rem
+) {
+  -webkit-appearance: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+
+  &:focus {
+    // outline: none;
+    outline-color: transparent;
+
+    &::-webkit-slider-runnable-track {
+      background: $trackColor;
+    }
+
+    &::-ms-fill-lower {
+      background: $trackColor;
+    }
+
+    &:focus::-ms-fill-upper {
+      background: $trackColor;
+    }
+  }
+
+  &::-webkit-slider-runnable-track {
+    width: 100%;
+    height: $trackSize;
+    cursor: pointer;
+    animation: 0.2s;
+    box-shadow: 0px 0px 0px $neutral-black, 0px 0px 0px $neutral-black;
+    background: $trackColor;
+    border-radius: $trackRadius;
+    border: 0px solid $neutral-900;
+  }
+
+  &::-webkit-slider-thumb {
+    box-shadow: 0px 0px 0px $neutral-black, 0px 0px 0px $neutral-900;
+    border: 0px solid $neutral-black;
+    height: $thumbSize;
+    width: $thumbSize;
+    border-radius: $thumbRadius;
+    background: $thumbColor;
+    cursor: pointer;
+    -webkit-appearance: none;
+    margin-top: -6px;
+  }
+
+  //For IE 12+ -> Edge
+  @supports (-ms-ime-align: auto) {
+    &::-webkit-slider-thumb {
+      margin-top: 0px !important;
+    }
+  }
+
+  // FIREFOX
+  &::-moz-range-track {
+    width: 100%;
+    height: $trackSize;
+    cursor: pointer;
+    animation: 0.2s;
+    box-shadow: 0px 0px 0px transparent, 0px 0px 0px transparent;
+    background: $trackColor;
+    border-radius: $trackRadius;
+    border: 0px solid transparent;
+  }
+
+  &::-moz-range-thumb {
+    box-shadow: 0px 0px 0px transparent, 0px 0px 0px transparent;
+    border: 0px solid transparent;
+    height: $thumbSize;
+    width: $thumbSize;
+    border-radius: $thumbRadius;
+    background: $thumbColor;
+    cursor: pointer;
+  }
+
+  // IE
+  &::-ms-track {
+    height: $trackSize;
+    padding: 0;
+    cursor: pointer;
+    animation: 0.2s;
+    background: transparent;
+    border-color: transparent;
+    border-width: 6px 0;
+    color: transparent;
+  }
+
+  &::-ms-fill-lower {
+    background: $trackColor;
+    border: 0px solid $neutral-900;
+    border-radius: $trackRadius;
+    box-shadow: 0px 0px 0px $neutral-black, 0px 0px 0px $neutral-900;
+  }
+
+  &::-ms-fill-upper {
+    background: $trackColor;
+    border: 0px solid $neutral-900;
+    border-radius: $trackRadius;
+    box-shadow: 0px 0px 0px $neutral-black, 0px 0px 0px $neutral-900;
+  }
+
+  &::-ms-thumb {
+    box-shadow: 0px 0px 0px $neutral-black, 0px 0px 0px $neutral-900;
+    border: 0px solid $neutral-black;
+    height: $thumbSize;
+    width: $thumbSize;
+    border-radius: $thumbRadius;
+    background: $thumbColor;
+    cursor: pointer;
+  }
+}
+
+@mixin verticalCenter($position: relative) {
+  position: $position;
+  top: 50%;
+  -webkit-transform: translateY(-50%);
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
+}
+
+@mixin btn-icon($color: $emerald-green, $bgColor: $white-color, $lighter: true) {
+  @extend .ripple-effect;
+  background-color: transparent;
+  color: $color;
+  border: none;
+  border-radius: 50%;
+
+  @if $bgColor !=transparent {
+    &:focus,
+    &:hover {
+      background-color: hsla($color: $bgColor, $alpha: 0.3);
+    }
+  }
+
+  width: 30px;
+  height: 30px;
+  padding: 5px;
+  font-size: 20px;
+
+  &.btn-md {
+    padding: 6px 12px;
+  }
+
+  &.btn-sm {
+    padding: 3px 10px;
+  }
+
+  &[disabled='disabled'] {
+    cursor: not-allowed;
+
+    @if $lighter==true {
+      color: lighten($color: $color, $amount: 5);
+    } @else {
+      color: darken($color: $color, $amount: 5);
+    }
+
+    * {
+      cursor: inherit;
+
+      @if $lighter==true {
+        color: lighten($color: $color, $amount: 5);
+      } @else {
+        color: darken($color: $color, $amount: 5);
+      }
+    }
+  }
+}
+
+@mixin btn-icon-round($color: $primary-color, $bgColor: $white-color, $lighter: true) {
+  @extend .ripple-effect;
+  background-color: $bgColor;
+  color: hsla($color, 0.8);
+  border: none;
+  border-radius: 50%;
+  width: 3rem;
+  height: 3rem;
+  padding: 0.5rem;
+  font-size: 2rem;
+  cursor: hand;
+  cursor: pointer;
+
+  &.btn-md {
+    padding: 0.6rem 1.2rem;
+  }
+
+  &.btn-sm {
+    padding: 0.3rem 1rem;
+  }
+
+  &:hover,
+  &:active {
+    color: $color;
+    background-color: $white-color;
+  }
+
+  &[disabled='disabled'] {
+    cursor: not-allowed;
+
+    @if $lighter==true {
+      color: lighten($color: $color, $amount: 20);
+    } @else {
+      color: darken($color: $color, $amount: 5);
+    }
+
+    * {
+      cursor: inherit;
+
+      @if $lighter==true {
+        color: lighten($color: $color, $amount: 20);
+      } @else {
+        color: darken($color: $color, $amount: 5);
+      }
+    }
+  }
+}
+
+@mixin keyframes($name) {
+  @-webkit-keyframes #{$name} {
+    @content;
+  }
+
+  @-moz-keyframes #{$name} {
+    @content;
+  }
+
+  @-ms-keyframes #{$name} {
+    @content;
+  }
+
+  @keyframes #{$name} {
+    @content;
+  }
+}
+
+@mixin rotateY($deg) {
+  -webkit-transform: rotateY($deg);
+  -moz-transform: rotateY($deg);
+  transform: rotateY($deg);
+}
+
+// & ~ *: If there is at least $number elements, it will replace css of at most $number elements.
+/*
+start count: 1 -> n
+<selector>
+    <child>1</child>
+    <child>2</child>
+    <child>3</child>
+    <child>4</child>
+</selector>
+CSS:
+<selector>:nth-last-child: apply css for the latest child (child #4)
+<selector>:nth-last-child(2): apply css for the the second child of its parent, counting from the last child (child #2)
+<selector>:nth-last-child(3) ~ *: apply css for the (3 - 1) = 2 last child of its parent, counting from the last child (child #4 + #3)
+<selector>:nth-last-child(3), <selector>:nth-last-child(3) ~ *: apply css for n last child of its parent, counting from the last child (child #4 + #3 + #2)
+# n + number: ex: n + 2
+<selector>:nth-last-child(n + 2): apply css for the all child of its parent, but exclude 2 - 1 = 1 child (counting from the last child (child #4))
+# -n + number: ex: -n + 2
+<selector>:nth-last-child(-n + 2): apply css for the 2 last children of its parent
+Note: Note good for ($number%2 = 0 and number >= 4)
+*/
+@mixin children-quantity($number, $comparison: 'equal') {
+  $nth: '';
+
+  @if index(('atLeast' 'more-than' '>'), $comparison) {
+    $nth: 'n + #{$number}';
+  } @else if index(('atMost' 'less-than' '<'), $comparison) {
+    $nth: '-n + #{$number}';
+  } @else if index(('equal' '='), $comparison) {
+    $nth: $number;
+  } @else {
+    @error "Comparing must be one of atLeast, more-than, >, atMost, lest-than, <, equal, and =.";
+  }
+
+  &:nth-last-child(#{$nth}) {
+    &,
+    & ~ * {
+      @content;
+    }
+  }
+
+  /*
+    &:nth-last-child(#{$nth}) {
+        @content;
+    }
+    */
+}
+
+@mixin element-quantity($number) {
+  @include children-quantity($number, equal) {
+    @content;
+  }
+}
+
+/*Apply css for all of children of the parent, but exclude $number - 1 of children (counting from the last child)*/
+@mixin atLeast($number) {
+  @include children-quantity($number, atLeast) {
+    @content;
+  }
+}
+
+/*Apply css for $number last children of the parent*/
+@mixin atMost($number) {
+  @include children-quantity($number, atMost) {
+    @content;
+  }
+}
+
+@mixin grid($numCol, $margin, $parent: none) {
+  @if $parent !=none {
+    @at-root {
+      #{$parent} {
+        @include flexbox();
+        flex-flow: row wrap;
+        margin: -#{$margin};
+      }
+    }
+  }
+
+  margin: #{$margin};
+
+  @if $numCol <=1 {
+    @include flex-calc(1, 0, 100%);
+    max-width: calc(100% - 2 *#{$margin});
+  } @else {
+    @include flex-calc(1, 0, calc(100% / #{$numCol}));
+    max-width: calc(100% / #{$numCol} - 2 *#{$margin});
+    max-width: calc(100% / #{$numCol} - 0.3px - 2 *#{$margin}) \0;
+  }
+
+  @content;
+}
+
+@mixin scroll-snap($parent: none) {
+  @if $parent !=none {
+    @at-root {
+      #{$parent} {
+        scroll-snap-type: x mandatory;
+      }
+    }
+  }
+  scroll-snap-align: center;
+  @content;
+}
+
+@mixin mobile-view {
+  @media (max-width: $mobile-breakpoint) {
+    @content;
+  }
+}
+
+@mixin desktop-view {
+  @media (min-width: calc(#{$mobile-breakpoint} + 0.01em)) {
+    @content;
+  }
+}
+
+@mixin hand-phone-view {
+  @media (max-width: $hand-phone-breakpoint) {
+    @content;
+  }
+}
+
+@mixin grid($numCol, $margin, $parent: none) {
+  @if $parent !=none {
+    @at-root {
+      #{$parent} {
+        @include flexbox();
+        flex-flow: row wrap;
+        margin: -#{$margin};
+      }
+    }
+  }
+
+  margin: #{$margin};
+
+  @if $numCol <=1 {
+    @include flex-calc(1, 0, 100%);
+    max-width: calc(100% - 2 *#{$margin});
+  } @else {
+    @include flex-calc(1, 0, calc(100% / #{$numCol}));
+    max-width: calc(100% / #{$numCol} - 2 *#{$margin});
+    max-width: calc(100% / #{$numCol} - 0.3px - 2 *#{$margin}) \0;
+  }
+
+  @content;
+}
+
+// https://www.youtube.com/watch?v=OZ6qKoq7RJU
+// Nếu muốn tất cả items trong cột stretch ra đầy hàng, thì xài auto-fit
+// Nếu muốn trong trường hợp quá ít element thì nó sẽ chỉ chiếm một phần hàng, khi có nhiều item hơn thì nó không làm cho item co giản nhiểu, thì xài auto-fill.
+@mixin real-grid($displayStyle: 'fit') {
+  --grid-columns-size: 32rem;
+  --grid-gap-size: 1.6rem;
+  @content;
+  display: grid;
+  gap: var(--grid-gap-size);
+  @if $displayStyle == 'fit' {
+    grid-template-columns: repeat(auto-fit, minmax(min(var(--grid-columns-size), 100%), 1fr));
+  } @else {
+    grid-template-columns: repeat(auto-fill, minmax(min(var(--grid-columns-size), 100%), 1fr));
+  }
+}

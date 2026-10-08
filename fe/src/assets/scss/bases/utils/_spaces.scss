@@ -1,0 +1,60 @@
+@use "./../../foundations/variables" as *;
+
+@if $enable-spaces-classes == true {
+  @each $size, $v in $sizes {
+    .m-#{$size} {
+      margin: $v;
+    }
+
+    .gap-#{$size} {
+      gap: $v;
+    }
+
+    .my-#{$size} {
+      margin-top: $v;
+      margin-bottom: $v;
+    }
+
+    .mx-#{$size} {
+      margin-left: $v;
+      margin-right: $v;
+    }
+
+    .p-#{$size} {
+      padding: $v;
+    }
+
+    .py-#{$size} {
+      padding-top: $v;
+      padding-bottom: $v;
+    }
+
+    .px-#{$size} {
+      padding-left: $v;
+      padding-right: $v;
+    }
+
+    @each $dl, $dv in $directions {
+      .m#{$dl}-#{$size} {
+        margin-#{$dv}: $v;
+      }
+
+      .p#{$dl}-#{$size} {
+        padding-#{$dv}: $v;
+      }
+    }
+  }
+
+  // Reset...
+  @each $dl, $dv in $directions {
+    // Reset margin
+    .m#{$dl}-0 {
+      margin-#{$dv}: 0 !important;
+    }
+
+    // Reset padding
+    .p#{$dl}-0 {
+      padding-#{$dv}: 0 !important;
+    }
+  }
+}

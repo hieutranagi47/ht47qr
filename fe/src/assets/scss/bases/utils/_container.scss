@@ -1,0 +1,24 @@
+@use "sass:map";
+@use "./../../foundations/variables" as *;
+@use "./../config" as *;
+@use "mixins/breakpoints" as *;
+
+@if $enable-container-classes {
+  .container {
+    margin: 0 auto;
+    padding-left: $container-padding;
+    padding-right: $container-padding;
+  }
+
+  @each $vp, $v in $container-max-widths {
+    @include media-breakpoint-up($vp) {
+      .container {
+        max-width: $v;
+        @if #{map.get($container-paddings, $vp)} != #{$container-padding} {
+          padding-left: map.get($container-paddings, $vp);
+          padding-right: map.get($container-paddings, $vp);
+        }
+      }
+    }
+  }
+}

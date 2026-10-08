@@ -1,0 +1,498 @@
+@use 'sass:map';
+
+/****************************************
+********** PLATFORM VARIABLES ***********
+****************************************/
+
+/**
+ * Table of content
+ *
+ * COLORS
+ * Brand colors
+ * Neutral colors
+ * Utility colors
+ * 
+ * TYPOGRAPHY
+ * Font families
+ * Font weight
+ * Sizes
+ * Heading sizes
+ * 
+ * BREAKPOINTS
+ * 
+ * 
+ */
+
+/*==========================================
+=              CONFIGURATION               =
+==========================================*/
+$ds-prefix: 'ht47';
+/* Font sizes */
+$fs: (
+  '0': 0,
+  '10': 1rem,
+  '12': 1.2rem,
+  '14': 1.4rem,
+  '16': 1.6rem,
+  '18': 1.8rem,
+  '24': 2.4rem,
+  '36': 3.6rem,
+  '48': 4.8rem,
+);
+
+$fw: (
+  '100': 100,
+  '200': 200,
+  '300': 300,
+  '400': 400,
+  '500': 500,
+  '600': 600,
+  '700': 700,
+  '800': 800,
+  '900': 900,
+);
+
+$lh: (
+  '80': 0.8,
+  '100': 1,
+  '110': 1.1,
+  '120': 1.2,
+  '130': 1.3,
+  '140': 1.4,
+  '150': 1.5,
+  '160': 1.6,
+  '170': 1.7,
+  '180': 1.8,
+  '190': 1.9,
+  '200': 2,
+);
+
+$mode: 'normal' !default; // 'admin' | 'normal', decide default theme for the project
+$theme: 'light' !default; // 'light' | 'dark'
+
+$yellowBlue: (
+  '100': hsl(44 100% 93.5%),
+  '200': hsl(44 100% 86.5%),
+  '300': hsl(44 100% 79.5%),
+  '400': hsl(44 100% 72.5%),
+  '500': hsl(44 100% 66.5%),
+  '600': hsl(44 100% 59.5%),
+  '700': hsl(44 100% 52.5%),
+  '800': hsl(44 100% 45.5%),
+  '900': hsl(44 100% 38.5%),
+  '100-text': hsl(224 100% 29.2%),
+  '500-text': hsl(224 100% 29.2%),
+) !default;
+
+$winterPalettes: (
+  '100': hsl(250 45% 95%),
+  '200': hsl(250 45% 85%),
+  '300': hsl(250 45% 75%),
+  '400': hsl(250 45% 65%),
+  '500': hsl(250 45% 55%),
+  '600': hsl(250 45% 45%),
+  '700': hsl(250 45% 35%),
+  '800': hsl(250 45% 25%),
+  '900': hsl(250 45% 15%),
+  '100-text': hsl(230 55% 30%),
+  '500-text': hsl(230 55% 30%),
+) !default;
+
+$autumnPalettes: (
+  '100': hsl(28 100% 94%),
+  '200': hsl(28 100% 85%),
+  '300': hsl(28 100% 76%),
+  '400': hsl(28 100% 67%),
+  '500': hsl(28 100% 58%),
+  '600': hsl(28 100% 49%),
+  '700': hsl(28 100% 40%),
+  '800': hsl(28 100% 31%),
+  '900': hsl(28 100% 22%),
+  '100-text': hsl(20 60% 30%),
+  '500-text': hsl(20 60% 30%),
+) !default;
+
+$summerPalettes: (
+  '100': hsl(195 65% 94%),
+  '200': hsl(195 65% 85%),
+  '300': hsl(195 65% 76%),
+  '400': hsl(195 65% 67%),
+  '500': hsl(195 65% 58%),
+  '600': hsl(195 65% 49%),
+  '700': hsl(195 65% 40%),
+  '800': hsl(195 65% 31%),
+  '900': hsl(195 65% 22%),
+  '100-text': hsl(210 70% 28%),
+  '500-text': hsl(210 70% 28%),
+) !default;
+
+$springPalettes: (
+  '100': hsl(120 45% 94%),
+  '200': hsl(120 45% 85%),
+  '300': hsl(120 45% 76%),
+  '400': hsl(120 45% 67%),
+  '500': hsl(120 45% 58%),
+  '600': hsl(120 45% 49%),
+  '700': hsl(120 45% 40%),
+  '800': hsl(120 45% 31%),
+  '900': hsl(120 45% 22%),
+  '100-text': hsl(150 55% 26%),
+  '500-text': hsl(150 55% 26%),
+) !default;
+
+$yellowBlueSecondary: (
+  '100': hsl(275 86% 79%),
+  '200': hsl(275 86% 68%),
+  '300': hsl(275 86% 57%),
+  '400': hsl(275 86% 47%),
+  '500': hsl(275 86% 36%),
+  '600': hsl(275 86% 33.5%),
+  '700': hsl(275 86% 30.5%),
+  '800': hsl(275 86% 27.5%),
+  '900': hsl(275 86% 24%),
+  '100-text': hsl(57 87% 60%),
+  '500-text': hsl(57 87% 60%),
+);
+
+$greenPalettes: (
+  '100': hsl(165 100% 90%),
+  '200': hsl(165 100% 75%),
+  '300': hsl(165 100% 60%),
+  '400': hsl(165 100% 50%),
+  '500': hsl(165 100% 40%),
+  '600': hsl(165 100% 35%),
+  '700': hsl(165 100% 30%),
+  '800': hsl(165 100% 25%),
+  '900': hsl(165 100% 20%),
+  '100-text': hsl(0 0% 7%),
+  '500-text': hsl(0 0% 7%),
+) !default;
+
+$redPalettes: (
+  '100': hsl(0 49% 90%),
+  '200': hsl(0 50% 75%),
+  '300': hsl(0 50% 65%),
+  '400': hsl(0 50% 55%),
+  '500': hsl(0 50% 45%),
+  '600': hsl(0 50% 40%),
+  '700': hsl(0 50% 35%),
+  '800': hsl(0 50% 30%),
+  '900': hsl(0 50% 25%),
+  '100-text': hsl(0 0% 7%),
+  '500-text': hsl(0 0% 7%),
+) !default;
+
+$neutralPalettes: (
+  'white': hsl(0 0% 100%),
+  '100': hsl(0 0% 95%),
+  '200': hsl(0 0% 90%),
+  '300': hsl(0 0% 80%),
+  '400': hsl(0 0% 75%),
+  '500': hsl(0 0% 70%),
+  '600': hsl(0 0% 60%),
+  '700': hsl(0 0% 45%),
+  '800': hsl(0 0% 35%),
+  '900': hsl(0 0% 20%),
+  'black': hsl(0 0% 0%),
+) !default;
+
+$neutralDarkPalettes: (
+  'white': hsl(0 0% 0%),
+  '100': hsl(0 0% 20%),
+  '200': hsl(0 0% 35%),
+  '300': hsl(0 0% 45%),
+  '400': hsl(0 0% 60%),
+  '500': hsl(0 0% 70%),
+  '600': hsl(0 0% 75%),
+  '700': hsl(0 0% 80%),
+  '800': hsl(0 0% 90%),
+  '900': hsl(0 0% 95%),
+  'black': hsl(0 0% 100%),
+) !default;
+
+$primaryColorPalettes: $greenPalettes !default;
+$secondaryColorPalettes: $yellowBlue !default;
+$accentColorPalettes: $redPalettes !default;
+
+$orgTheme: (
+  'box-shadow-color': map.get($neutralPalettes, '50'),
+  'hyperlink-color': hsl(0 100% 83%),
+);
+
+/*==========================================
+=                   COLORS                 =
+==========================================*/
+
+/* Brand colors */
+
+/* Utility colors */
+$black: hsl(0 0% 0%) !default;
+$white: hsl(0 0% 100%) !default;
+$green: hsl(136 53% 59%) !default;
+$green-light: hsl(136 54% 75%) !default;
+
+$red: hsl(0 69% 49%) !default;
+$red-light: hsl(358 65% 92%) !default;
+
+$blue: hsl(212 96% 44%) !default;
+$blue-light: hsl(212 74% 83%) !default;
+
+$yellow: hsl(60 69% 49%) !default;
+$light-yellow: hsl(60 51% 64%) !default;
+/*===== End ot Colors =====*/
+
+/*==========================================
+=                TYPOGRAPHY                =
+==========================================*/
+
+/**
+* 1) The playfare font will be use for headerings mostly.
+* https://fonts.google.com/...
+*
+* 2) The Raleway font will be use for body text.
+* https://fonts.google.com/...
+*/
+
+/* FONT FAMILIES */
+$default-font: 'Inconsolata', 'Ht47 Fallback', sans-serif !default;
+
+$line-height: 1.5;
+
+/*===== End ot Typography =====*/
+
+/*==========================================
+=               BREAKPOINTs                =
+==========================================*/
+
+$grid-breakpoints: (
+  '336': 21em,
+  '368': 23em,
+  '576': 36em,
+  '768': 48em,
+  '992': 62em,
+  '1200': 75em,
+  '1440': 90em,
+  '1600': 100em,
+  '1920': 120em,
+  '2048': 128em,
+  '4096': 256em,
+) !default;
+
+$container-max-widths: (
+  '336': 100%,
+  '368': 100%,
+  '576': 100%,
+  '768': 100%,
+  '992': 100%,
+  '1200': 72em,
+  '1440': 87em,
+  '1600': 90em,
+  '1920': 90em,
+  '2048': 90em,
+  '4096': 90em,
+) !default;
+
+$container-paddings: (
+  '336': 1.5rem,
+  '368': 1.5rem,
+  '576': 1.5rem,
+  '768': 1.5rem,
+  '992': 3rem,
+  '1200': 1.5rem,
+  '1440': 1.5rem,
+  '1600': 1.5rem,
+  '1920': 1.5rem,
+  '2048': 1.5rem,
+  '4096': 1.5rem,
+) !default;
+
+/*===== End ot Breakpoints =====*/
+
+/*==========================================
+=                   GAPS                   =
+==========================================*/
+$sizes: (
+  '0': 0,
+  '4': 0.4rem,
+  // 4px
+  '8': 0.8rem,
+  '12': 1.2rem,
+  '16': 1.6rem,
+  '20': 2rem,
+  '24': 2.4rem,
+  '30': 3rem,
+  '36': 3.6rem,
+  '40': 4rem,
+  '48': 4.8rem,
+) !default;
+
+$directions: (
+  't': 'top',
+  'e': 'right',
+  'b': 'bottom',
+  's': 'left',
+) !default;
+
+$rounds: (
+  '0': 0,
+  '4': 0.4rem,
+  '8': 0.8rem,
+  '12': 1.2rem,
+  '16': 1.6rem,
+  '20': 2rem,
+  '24': 2.4rem,
+  '30': 3rem,
+  '36': 3.6rem,
+  '48': 4.8rem,
+  '56': 5.6rem,
+  '64': 6rem,
+  '72': 7.2rem,
+  '96': 9.6rem,
+) !default;
+/*===== End ot Gaps =====*/
+
+/*========== BEGIN: DISPLAYS ==========*/
+$displays: (
+  'inline': inline,
+  'block': block,
+  'inline-block': inline-block,
+  'flow-root': flow-root,
+  'flex': flex,
+  'inline-flex': inline-flex,
+  'grid': grid,
+  'inline-grid': inline-grid,
+  'contents': contents,
+  'table': table,
+  'inline-table': inline-table,
+  'table-caption': table-caption,
+  'table-cell': table-cell,
+  'table-column': table-column,
+  'table-column-group': table-column-group,
+  'table-footer-group': table-footer-group,
+  'table-header-group': table-header-group,
+  'table-row-group': table-row-group,
+  'table-row': table-row,
+  'list-item': list-item,
+  'none': none,
+) !default;
+
+$flex-directions: (
+  'row': row,
+  'row-reverse': row-reverse,
+  'column': column,
+  'column-reverse': column-reverse,
+) !default;
+
+$flex-wraps: (
+  'nowrap': nowrap,
+  'wrap': wrap,
+  'wrap-reverse': wrap-reverse,
+) !default;
+
+$justify-content: (
+  'start': flex-start,
+  'end': flex-end,
+  'center': center,
+  'between': space-between,
+  'around': space-around,
+  'evenly': space-evenly,
+) !default;
+
+$align-items: (
+  'start': flex-start,
+  'end': flex-end,
+  'center': center,
+  'baseline': baseline,
+  'stretch': stretch,
+) !default;
+
+$align-content: (
+  'start': flex-start,
+  'end': flex-end,
+  'center': center,
+  'between': space-between,
+  'around': space-around,
+  'stretch': stretch,
+) !default;
+
+$align-self: (
+  'auto': auto,
+  'start': flex-start,
+  'end': flex-end,
+  'center': center,
+  'baseline': baseline,
+  'stretch': stretch,
+) !default;
+
+$flex-grow: (
+  '0': 0,
+  '1': 1,
+  '2': 2,
+  '3': 3,
+  '4': 4,
+  '5': 5,
+) !default;
+
+$flex-shrink: (
+  '0': 0,
+  '1': 1,
+  '2': 2,
+  '3': 3,
+  '4': 4,
+  '5': 5,
+) !default;
+
+$flex-basis: (
+  'auto': auto,
+  '0': 0,
+  '25': 25%,
+  '50': 50%,
+  '75': 75%,
+  '100': 100%,
+) !default;
+/*=========== END: DISPLAYS ===========*/
+
+/*========== BEGIN: OVERFLOW ==========*/
+$overflows: (
+  'visible': visible,
+  'hidden': hidden,
+  'scroll': scroll,
+  'auto': auto,
+  'clip': clip,
+  'x-visible': visible hidden,
+  'y-visible': hidden visible,
+  'x-hidden': hidden hidden,
+  'y-hidden': visible visible,
+  'x-scroll': scroll hidden,
+  'y-scroll': hidden scroll,
+  'x-auto': auto hidden,
+  'y-auto': hidden auto,
+  'x-clip': clip hidden,
+  'y-clip': hidden clip,
+) !default;
+/*=========== END: OVERFLOW ===========*/
+
+$enable-container-classes: true;
+$enable-typography-classes: true;
+$enable-spaces-classes: true;
+$enable-display-classes: true;
+$enable-flex-classes: true;
+$enable-overflow-classes: true;
+
+$btnSizes: (
+  'sm': (
+    'font-size': map.get($fs, '12'),
+    'padding': map.get($sizes, '12'),
+    'height': 3.2rem,
+  ),
+  'md': (
+    'font-size': map.get($fs, '16'),
+    'padding': map.get($sizes, '16'),
+    'height': 4rem,
+  ),
+  'lg': (
+    'font-size': map.get($fs, '20'),
+    'padding': map.get($sizes, '30'),
+    'height': 5.6rem,
+  ),
+) !default;

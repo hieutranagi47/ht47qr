@@ -1,0 +1,141 @@
+@use './../../foundations/variables' as *;
+@use './../../bases/colors' as *;
+@use './../../bases/spaces' as *;
+@use './../../bases/rounds' as *;
+@use './../../utils/utils' as *;
+@use './../../mixins/general' as *;
+@use './../../bases/config' as *;
+
+[class|="btn"] {
+  all: unset;
+  height: var(--#{$ds-prefix}-dse-btn-height-md, 4rem);
+  font-size: var(--#{$ds-prefix}-dse-btn-font-size-md, 1.6rem);
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: $gap-12;
+  border-width: 0.1rem;
+  border-style: solid;
+  border-radius: $round-8;
+  white-space: nowrap;
+  box-sizing: border-box;
+  line-height: 1;
+  cursor: pointer;
+  @extend %prevent-selection;
+
+  @include hand-phone-view() {
+    height: 3.2rem;
+    padding-left: $gap-12;
+    padding-right: $gap-12;
+  }
+
+  &:not([class*="-icon"]) {
+    padding-left: var(--#{$ds-prefix}-dse-btn-padding-md, 1.6rem);
+    padding-right: var(--#{$ds-prefix}-dse-btn-padding-md, 1.6rem);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    filter: opacity(50%);
+    // filter: grayscale(68%);
+  }
+
+}
+
+.btn {
+  &-primary {
+    background-color: $btn-primary-bg;
+    color: $btn-primary-color;
+    border-color: $btn-border-color;
+    &:not(:disabled) {
+      &:hover {
+        background-color: $btn-primary-hover-bg;
+      }
+      &:active,
+      &:focus,
+      &:focus-visible {
+        background-color: $btn-primary-active-bg;
+      }
+    }
+  }
+
+  &-secondary {
+    background-color: $btn-secondary-bg;
+    color: $btn-secondary-color;
+    border-color: $btn-secondary-border-color;
+    &:not(:disabled) {
+      &:hover {
+        background-color: $btn-secondary-hover-bg;
+      }
+      &:active,
+      &:focus,
+      &:focus-visible {
+        background-color: $btn-secondary-active-bg;
+      }
+    }
+  }
+
+  &-outline {
+    background-color: transparent;
+    border: 1px solid $btn-primary-bg;
+    color: inherit;
+    &:not(:disabled) {
+      &:hover {
+        background-color: $btn-primary-bg;
+        color: $btn-primary-color;
+      }
+      &:active,
+      &:focus,
+      &:focus-visible {
+        background-color: $btn-primary-active-bg;
+      }
+    }
+  }
+
+  &-icon {
+    border: none;
+    font-size: $icon-size;
+    width: var(--#{$ds-prefix}-dse-btn-height-md, 4rem);
+  }
+
+  &-sm {
+    height: var(--#{$ds-prefix}-dse-btn-height-sm, 3.2rem);
+    font-size: var(--#{$ds-prefix}-dse-btn-font-size-sm, 1.4rem);
+    padding-left: var(--#{$ds-prefix}-dse-btn-padding-sm, 1.2rem);
+    padding-right: var(--#{$ds-prefix}-dse-btn-padding-sm, 1.2rem);
+  }
+
+  &-lg {
+    height: var(--#{$ds-prefix}-dse-btn-height-lg, 4.8rem);
+    font-size: var(--#{$ds-prefix}-dse-btn-font-size-lg, 1.8rem);
+    padding-left: var(--#{$ds-prefix}-dse-btn-padding-lg, 2.4rem);
+    padding-right: var(--#{$ds-prefix}-dse-btn-padding-lg, 2.4rem);
+  }
+
+  &-square {
+    font-size: $icon-size;
+    width: var(--#{$ds-prefix}-dse-btn-height-md, 4rem);
+    height: var(--#{$ds-prefix}-dse-btn-height-md, 4rem);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: none;
+
+    &.btn-small {
+      width: var(--#{$ds-prefix}-dse-btn-height-sm, 3.2rem);
+      height: var(--#{$ds-prefix}-dse-btn-height-sm, 3.2rem);
+    }
+    &.btn-large {
+      width: var(--#{$ds-prefix}-dse-btn-height-lg, 4.8rem);
+      height: var(--#{$ds-prefix}-dse-btn-height-lg, 4.8rem);
+    }
+  }
+}
+
+// @at-root body.dark {
+//   .btn {
+//     &.btn-outline {
+//       color: $body-text-color;
+//     }
+//   }
+// }

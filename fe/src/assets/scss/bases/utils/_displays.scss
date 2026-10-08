@@ -1,0 +1,68 @@
+@use './../../foundations/variables' as *;
+
+@if ($enable-display-classes) {
+  @each $display, $value in $displays {
+    .d-#{$display} {
+      display: $value;
+    }
+  }
+}
+
+@if ($enable-flex-classes) {
+  @each $flex, $value in $flex-directions {
+    .direction-#{$flex} {
+      flex-direction: $value;
+    }
+  }
+
+  @each $flex, $value in $flex-wraps {
+    .wrap-#{$flex} {
+      flex-wrap: $value;
+    }
+  }
+
+  @each $flex, $value in $justify-content {
+    .justify-#{$flex} {
+      justify-content: $value;
+    }
+  }
+
+  @each $flex, $value in $align-items {
+    .items-#{$flex} {
+      align-items: $value;
+    }
+  }
+
+  @each $flex, $value in $align-content {
+    .content-#{$flex} {
+      align-content: $value;
+    }
+  }
+
+  @each $flex, $value in $align-self {
+    .self-#{$flex} {
+      align-self: $value;
+    }
+  }
+
+  @each $flex, $value in $flex-grow {
+    .grow-#{$flex} {
+      flex-grow: $value;
+    }
+  }
+
+  @each $flex, $value in $flex-shrink {
+    .shrink-#{$flex} {
+      flex-shrink: $value;
+    }
+  }
+
+  .flex-fill {
+    flex: 1 1 100%;
+  }
+
+  .flex-fit-content {
+    flex: 0 0 auto;
+  }
+
+}

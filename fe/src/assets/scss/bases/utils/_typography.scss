@@ -1,0 +1,71 @@
+@use 'sass:map';
+@use './../../foundations/variables' as *;
+
+@if $enable-typography-classes == true {
+  @each $key, $val in $fs {
+    .fs-#{$key} {
+      font-size: $val;
+    }
+  }
+
+  @each $key, $val in $fw {
+    .fw-#{$key} {
+      font-weight: $val;
+    }
+  }
+
+  @each $key, $val in $lh {
+    .lh-#{$key} {
+      line-height: $val;
+    }
+  }
+
+  .extra-title {
+    font-size: min(8vw, map.get($fs, '48'));
+    font-weight: map.get($fw, '900');
+  }
+
+  .page-title {
+    font-size: min(7vw, map.get($fs, '36'));
+    font-weight: map.get($fw, '700');
+  }
+
+  .page-subtitle {
+    font-size: min(5vw, map.get($fs, '24'));
+    font-weight: map.get($fw, '700');
+  }
+
+  .section-title {
+    font-size: map.get($fs, '20');
+    font-weight: map.get($fw, '600');
+  }
+
+  .card-title {
+    font-size: map.get($fs, '18');
+    font-weight: map.get($fw, '500');
+  }
+
+  .text-center {
+    text-align: center;
+  }
+
+  .text-left {
+    text-align: left;
+  }
+
+  .text-right {
+    text-align: right;
+  }
+
+  .text-uppercase {
+    text-transform: uppercase;
+  }
+
+  .text-lowercase {
+    text-transform: lowercase;
+  }
+
+  .text-capitalize {
+    text-transform: capitalize;
+  }
+}

@@ -1,0 +1,45 @@
+@use "./../../foundations/variables" as *;
+@use "./../../mixins/breakpoints" as *;
+@use "./../../mixins/general" as *;
+@use "./../../bases/config" as *;
+
+.for-mobile {
+  @include desktop-view() {
+    display: none;
+  }
+}
+
+.for-desktop {
+  @include mobile-view() {
+    display: none;
+  }
+}
+
+.reset-ul {
+  padding-left: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  list-style: none;
+}
+
+.btn-indent {
+  position: absolute;
+  text-indent: -999rem;
+}
+
+.fit-screen {
+  min-height: $page-min-height;
+}
+
+a[href^='http'] {
+  margin-right: 3ch;
+  position: relative;
+
+  &::after {
+    content: '⌞ ⌝' / "Go to external page";
+    position: absolute;
+    top: 0;
+    right: -2rem;
+    font-size: 1rem;
+  }
+}

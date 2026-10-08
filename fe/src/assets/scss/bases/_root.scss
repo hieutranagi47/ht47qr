@@ -1,0 +1,184 @@
+@use "sass:map";
+@use "sass:color";
+@use "./../foundations/variables" as *;
+@use "./../functions/casting" as fn;
+
+// legacy support to apply alpha color in design system
+// --#{$ds-prefix}-dse-primary-alpha: #{color.hue($value)},
+//   #{color.saturation($value)}, #{color.lightness($value)};
+
+// Apply the default theme into the design system.
+@mixin sysDesignDefaultTheme(
+  $pPalettes: $primaryColorPalettes,
+  $sPalettes: null,
+  $aPalettes: null,
+  $neutralBg: true
+) {
+  // @debug "CHECK PRIMARY: #{$secondaryColorPalettes}";
+  :root {
+    --#{$ds-prefix}-dse-white: #{$white};
+    --#{$ds-prefix}-dse-black: #{$black};
+
+    @if $neutralBg == true {
+      --#{$ds-prefix}-dse-body-text-color: #{map.get($neutralPalettes, "900")};
+      --#{$ds-prefix}-dse-body-bg-color: #{map.get($neutralPalettes, "100")};
+    } @else {
+      --#{$ds-prefix}-dse-body-text-color: #{map.get($pPalettes, "100-text")};
+      --#{$ds-prefix}-dse-body-bg-color: #{map.get($pPalettes, "100")};
+    }
+
+    @each $primaryKey, $value in $pPalettes {
+      @if $primaryKey == "500" {
+        --#{$ds-prefix}-dse-primary: #{$value};
+      } @else if $primaryKey == "500-text" {
+        --#{$ds-prefix}-dse-primary-text: #{$value};
+      } @else {
+        // primaryKey is xxx and xxx-text.
+        --#{$ds-prefix}-dse-primary-#{$primaryKey}: #{$value};
+      }
+    }
+
+    @if ($sPalettes != null) {
+      @each $secondaryKey, $value in $sPalettes {
+        @if $secondaryKey == "500" {
+          --#{$ds-prefix}-dse-secondary: #{$value};
+        } @else if $secondaryKey == "500-text" {
+          --#{$ds-prefix}-dse-secondary-text: #{$value};
+        } @else {
+          --#{$ds-prefix}-dse-secondary-#{$secondaryKey}: #{$value};
+        }
+      }
+    }
+
+    @if ($aPalettes != null) {
+      @if $aPalettes {
+        @each $accentKey, $value in $aPalettes {
+          @if $accentKey == "500" {
+            --#{$ds-prefix}-dse-accent: #{$value};
+          } @else if $accentKey == "500-text" {
+            --#{$ds-prefix}-dse-accent-text: #{$value};
+          } @else {
+            --#{$ds-prefix}-dse-accent-#{$accentKey}: #{$value};
+          }
+        }
+      }
+    }
+
+    @each $neutralKey, $value in $neutralPalettes {
+      --#{$ds-prefix}-dse-neutral-#{$neutralKey}: #{$value};
+    }
+
+    --#{$ds-prefix}-dse-success: #{$green};
+    --#{$ds-prefix}-dse-warning: #{$yellow};
+    --#{$ds-prefix}-dse-error: #{$red};
+    --#{$ds-prefix}-dse-info: #{$blue};
+
+    --#{$ds-prefix}-dse-body-font-size: #{map.get($fs, "16")};
+    --#{$ds-prefix}-dse-body-font-weight: #{map.get($fw, "400")};
+
+    @each $fontSize, $value in $fs {
+      --#{$ds-prefix}-dse-fs-#{$fontSize}: #{$value};
+    }
+
+    @each $fontWeight, $value in $fw {
+      --#{$ds-prefix}-dse-fw-#{$fontWeight}: #{$value};
+    }
+
+    @each $size, $value in $sizes {
+      --#{$ds-prefix}-dse-size-#{$size}: #{$value};
+    }
+
+    @each $round, $value in $rounds {
+      --#{$ds-prefix}-dse-round-#{$round}: #{$value};
+    }
+
+    @each $btnSize, $value in $btnSizes {
+      @each $btnSizeKey, $btnSizeValue in $value {
+        --#{$ds-prefix}-dse-btn-#{$btnSizeKey}-#{$btnSize}: #{$btnSizeValue};
+      }
+    }
+
+    --#{$ds-prefix}-dse-fm: #{$default-font};
+    --#{$ds-prefix}-dse-fm-mono: #{$default-font};
+    --#{$ds-prefix}-dse-title-fm: #{$default-font};
+    --#{$ds-prefix}-dse-subtitle-fm: #{$default-font};
+  }
+
+  body.dark {
+    --#{$ds-prefix}-dse-body-text-color: #{map.get($neutralPalettes, "100")};
+    --#{$ds-prefix}-dse-body-bg-color: #{map.get($neutralPalettes, "800")};
+
+    @each $contract, $value in $neutralDarkPalettes {
+      --#{$ds-prefix}-dse-neutral-#{$contract}: #{$value};
+    }
+
+    @if ($sPalettes != null) {
+      @each $secondaryKey, $value in $sPalettes {
+        $num: fn.number($secondaryKey);
+        // if the key is the number => process it
+        @if (fn.is-number($num)) {
+          $invertKey: 1000 - $num;
+          $invertColor: map.get($sPalettes, "" + ($invertKey));
+          // because we have to calculate the key from string, then we have to manually get the text color.
+          $invertTextColor: map.get($sPalettes, $invertKey + "-text");
+          @if $secondaryKey == "500" {
+            --#{$ds-prefix}-dse-secondary: #{$invertColor};
+
+            --#{$ds-prefix}-dse-secondary-text: #{$invertTextColor};
+          } @else {
+            --#{$ds-prefix}-dse-secondary-#{$secondaryKey}: #{$invertColor};
+
+            --#{$ds-prefix}-dse-secondary-#{$secondaryKey}-text: #{$invertTextColor};
+          }
+        }
+      }
+    }
+  }
+}
+
+// Control theme by change class name of the body element => then you can use this mixin to add more theme.
+@mixin addParallelTheme(
+  $themeName,
+  $pPalettes,
+  $sPalettes: null,
+  $aPalettes: null
+) {
+  body.#{$themeName} {
+    @each $primaryKey, $value in $pPalettes {
+      @if $primaryKey == "500" {
+        --#{$ds-prefix}-dse-primary: #{$value};
+      } @else if $primaryKey == "500-text" {
+        --#{$ds-prefix}-dse-primary-text: #{$value};
+      } @else {
+        --#{$ds-prefix}-dse-primary-#{$primaryKey}: #{$value};
+      }
+    }
+
+    @if ($sPalettes != null) {
+      @each $secondaryKey, $value in $sPalettes {
+        @if $secondaryKey == "500" {
+          --#{$ds-prefix}-dse-secondary: #{$value};
+        } @else if $secondaryKey == "500-text" {
+          --#{$ds-prefix}-dse-secondary-text: #{$value};
+        } @else {
+          --#{$ds-prefix}-dse-secondary-#{$secondaryKey}: #{$value};
+        }
+      }
+    }
+
+    @if ($aPalettes != null) {
+      @each $accentKey, $value in $aPalettes {
+        @if $accentKey == "500" {
+          --#{$ds-prefix}-dse-accent: #{$value};
+        } @else if $accentKey == "500-text" {
+          --#{$ds-prefix}-dse-accent-text: #{$value};
+        } @else {
+          --#{$ds-prefix}-dse-accent-#{$accentKey}: #{$value};
+        }
+      }
+    }
+  }
+}
+
+// Apply the default theme to the system.
+@include sysDesignDefaultTheme($yellowBlue, $yellowBlueSecondary, null, false);

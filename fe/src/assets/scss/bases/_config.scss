@@ -1,0 +1,26 @@
+$gutter: 1.5rem;
+$mobile-breakpoint: 47.99em;
+$hand-phone-breakpoint: 36em;
+$icon-size: 2.4rem;
+$border-radius-base: 0.4rem;
+$viewport-height: var(--mobile-vh, 100vh);
+$header-height: 6.4rem;
+$header-height-m: 5.4rem;
+$container-padding: 1.5rem;
+$header-avatar-size: 3.6rem;
+$footer-height: 4rem;
+$footer-border: 0.2rem;
+$padding-rl-standard: 1.5rem;
+
+$zindex-dropdown: 1000;
+$zindex-sticky: 1020;
+$zindex-fixed: 1030;
+$zindex-modal-backdrop: 1040;
+$zindex-modal: 1050;
+$zindex-popover: 1060;
+$zindex-tooltip: 1070;
+$grid-gutter-width: 3rem;
+
+$page-min-height: calc(
+  $viewport-height - #{$header-height} - #{$footer-height} - 0.1rem
+);

@@ -1,0 +1,17 @@
+syntax = "proto3";
+package htqrcode.common.v1;
+option go_package = "htqrcode/common/api/grpc;grpcapi";
+
+message ErrorDetail {
+  string entity_type = 1;
+  string entity_id = 2;
+  string error_slug = 3;
+  string message = 4;
+}
+// Attached to google.rpc.Status.details; never includes internal diagnostics.
+message ErrorResponse {
+  string message = 1;
+  string slug = 2;
+  repeated ErrorDetail details = 3;
+  int32 http_status = 4;
+}

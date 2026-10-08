@@ -1,0 +1,13 @@
+@use "./../foundations/variables" as *;
+
+$gap-0: var(--#{$ds-prefix}-dse-size-0);
+$gap-4: var(--#{$ds-prefix}-dse-size-4);
+$gap-8: var(--#{$ds-prefix}-dse-size-8);
+$gap-12: var(--#{$ds-prefix}-dse-size-12);
+$gap-16: var(--#{$ds-prefix}-dse-size-16);
+$gap-20: var(--#{$ds-prefix}-dse-size-20);
+$gap-24: var(--#{$ds-prefix}-dse-size-24);
+$gap-30: var(--#{$ds-prefix}-dse-size-30);
+$gap-36: var(--#{$ds-prefix}-dse-size-36);
+$gap-40: var(--#{$ds-prefix}-dse-size-40);
+$gap-48: var(--#{$ds-prefix}-dse-size-48);

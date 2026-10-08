@@ -1,0 +1,16 @@
+@use './../foundations/variables' as *;
+
+$round-0: var(--#{$ds-prefix}-dse-round-0);
+$round-4: var(--#{$ds-prefix}-dse-round-4);
+$round-8: var(--#{$ds-prefix}-dse-round-8);
+$round-12: var(--#{$ds-prefix}-dse-round-12);
+$round-16: var(--#{$ds-prefix}-dse-round-16);
+$round-20: var(--#{$ds-prefix}-dse-round-20);
+$round-24: var(--#{$ds-prefix}-dse-round-24);
+$round-30: var(--#{$ds-prefix}-dse-round-30);
+$round-36: var(--#{$ds-prefix}-dse-round-36);
+$round-48: var(--#{$ds-prefix}-dse-round-48);
+$round-56: var(--#{$ds-prefix}-dse-round-56);
+$round-64: var(--#{$ds-prefix}-dse-round-64);
+$round-72: var(--#{$ds-prefix}-dse-round-72);
+$round-96: var(--#{$ds-prefix}-dse-round-96);
