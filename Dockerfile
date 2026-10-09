@@ -12,7 +12,7 @@ COPY fe/angular.json fe/tsconfig*.json ./
 COPY fe/src/ ./src/
 COPY fe/public/ ./public/
 
-RUN pnpm run build --configuration production
+RUN pnpm run build --configuration development
 
 # Build the Go server with the generated frontend assets.
 FROM golang:1.27.1-alpine AS builder

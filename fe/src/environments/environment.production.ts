@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiEndpoint: 'https://ht47qr-five.vercel.app/qrcode/api/',
+  apiEndpoint: 'https://ht47qr-five.vercel.app/api/qrcode/',
   apiVersion: 'v1',
   envName: 'prod',
   host: 'https://ht47qr-five.vercel.app',
