@@ -62,6 +62,8 @@ ENV SERVER_PORT="8888"
 ENV SERVER_PORT_TLS="8443"
 ENV SERVER_SSE_PORT="8886"
 ENV SERVER_SSE_PORT_TLS="8446"
+ENV DATABASE_BACKEND=postgres
+
 # Supply DATABASE_URL (or POSTGRES_URL) through Vercel runtime environment settings.
 # Optionally set DATABASE_URL_UNPOOLED (or POSTGRES_URL_NON_POOLING) for migrations.
 # Never bake database credentials into the image.

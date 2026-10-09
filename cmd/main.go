@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -93,11 +94,26 @@ func waitForDatabase(ctx context.Context, db interface{ PingContext(context.Cont
 // keeps its existing file path and connection settings for local deployments.
 func openDatabases(ctx context.Context) (htqrcode.ExternalServices, func(), error) {
 	dsn := firstEnvironment("DATABASE_URL", "POSTGRES_URL")
+	backend := strings.ToLower(strings.TrimSpace(os.Getenv("DATABASE_BACKEND")))
+	switch backend {
+	case "", "auto":
+		// Preserve automatic selection for existing local deployments.
+	case "postgres":
+		if dsn == "" {
+			return htqrcode.ExternalServices{}, nil, fmt.Errorf("DATABASE_BACKEND=postgres requires DATABASE_URL or POSTGRES_URL at runtime")
+		}
+	case "sqlite":
+		dsn = ""
+	default:
+		return htqrcode.ExternalServices{}, nil, fmt.Errorf("DATABASE_BACKEND must be auto, postgres, or sqlite")
+	}
 	if dsn != "" {
 		pool, err := pgxpool.New(ctx, dsn)
 		if err != nil {
 			return htqrcode.ExternalServices{}, nil, fmt.Errorf("invalid PostgreSQL configuration")
 		}
+		log.FromContext(ctx).Info("database selected", "backend", "postgresql",
+			"host", pool.Config().ConnConfig.Host, "database", pool.Config().ConnConfig.Database)
 		cleanup := func() { pool.Close() }
 		if err := waitForDatabase(ctx, postgresPinger{pool}); err != nil {
 			cleanup()
@@ -110,6 +126,8 @@ func openDatabases(ctx context.Context) (htqrcode.ExternalServices, func(), erro
 				cleanup()
 				return htqrcode.ExternalServices{}, nil, fmt.Errorf("invalid PostgreSQL migration configuration")
 			}
+			log.FromContext(ctx).Info("migration database selected", "backend", "postgresql",
+				"host", migrationPool.Config().ConnConfig.Host, "database", migrationPool.Config().ConnConfig.Database)
 			cleanup = func() { migrationPool.Close(); pool.Close() }
 			if err := waitForDatabase(ctx, postgresPinger{migrationPool}); err != nil {
 				cleanup()
@@ -126,6 +144,8 @@ func openDatabases(ctx context.Context) (htqrcode.ExternalServices, func(), erro
 	if err := os.MkdirAll(filepath.Dir(dbPath), 0o750); err != nil {
 		return htqrcode.ExternalServices{}, nil, fmt.Errorf("could not create SQLite database directory: %w", err)
 	}
+	log.FromContext(ctx).Info("database selected", "backend", "sqlite", "path", dbPath,
+		"configured_backend", backend)
 	db, err := sql.Open("sqlite3", dbPath+"?_journal_mode=WAL&_busy_timeout=5000&_foreign_keys=on")
 	if err != nil {
 		return htqrcode.ExternalServices{}, nil, err

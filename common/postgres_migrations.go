@@ -25,6 +25,8 @@ func MigratePostgresDatabaseUp(
 	fs fs.FS,
 	migrationsDir string,
 ) error {
+	log.FromContext(ctx).Info("applying PostgreSQL migrations", "schema", moduleName,
+		"host", pool.Config().ConnConfig.Host, "database", pool.Config().ConnConfig.Database)
 	db := stdlib.OpenDBFromPool(pool)
 	defer db.Close()
 
@@ -81,5 +83,11 @@ func MigratePostgresDatabaseUp(
 		return fmt.Errorf("migration up failed: %w", err)
 	}
 
+	version, dirty, err := m.Version()
+	if err != nil && !errors.Is(err, migrate.ErrNilVersion) {
+		return fmt.Errorf("could not read migration version: %w", err)
+	}
+	log.FromContext(ctx).Info("PostgreSQL migrations complete", "schema", moduleName,
+		"version", version, "dirty", dirty)
 	return nil
 }

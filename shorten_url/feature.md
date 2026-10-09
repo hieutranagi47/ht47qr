@@ -8,6 +8,10 @@ An invalid PostgreSQL configuration fails startup rather than switching storage.
 
 Set these in Vercel's runtime environment settings:
 
+- `DATABASE_BACKEND=postgres`: requires a PostgreSQL URL at startup, preventing
+  accidental SQLite storage across deployment containers. `Dockerfile.vercel`
+  sets this automatically. Local environments default to `auto`; `sqlite` can
+  explicitly select SQLite even when PostgreSQL URLs are present.
 - `DATABASE_URL` (or `POSTGRES_URL`): the pooled Neon PostgreSQL connection URL.
 - `DATABASE_URL_UNPOOLED` (or `POSTGRES_URL_NON_POOLING`): optional direct URL
   for startup migrations. Without it, migrations use the application pool.
