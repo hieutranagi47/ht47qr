@@ -1,10 +1,18 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { form, FormField, required, validate } from '@angular/forms/signals';
 import { finalize } from 'rxjs';
 import { APIErrorResponse } from '@app/shared/model/qr-request';
 import { ShortenURLResponse, TinyUrlApi } from './tiny-url-api';
+import { SeoMetaService } from '@app/core/seo/meta.service';
 
 @Component({
   imports: [DatePipe, FormField],
@@ -13,8 +21,9 @@ import { ShortenURLResponse, TinyUrlApi } from './tiny-url-api';
   templateUrl: './tiny-url.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TinyUrl {
+export class TinyUrl implements OnInit {
   private readonly api = inject(TinyUrlApi);
+  private readonly meta = inject(SeoMetaService);
   private readonly destroyRef = inject(DestroyRef);
   private request: { longURL: string; key: string } | null = null;
   readonly isLoading = signal(false);
@@ -35,6 +44,10 @@ export class TinyUrl {
       return { kind: 'url', message: 'Enter a valid URL starting with http:// or https://.' };
     });
   });
+
+  ngOnInit(): void {
+    this.meta.updateMeta('Shorten URL', 'make your url shortener to share with your partners');
+  }
 
   onSubmit(event: Event): void {
     event.preventDefault();

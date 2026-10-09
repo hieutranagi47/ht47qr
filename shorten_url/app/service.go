@@ -54,6 +54,7 @@ func (s *Service) Create(ctx context.Context, input CreateInput) (CreateOutput, 
 		return CreateOutput{}, err
 	}
 	if input.UserID == uuid.Nil {
+		limits.Lifetime = 7 * 24 * time.Hour
 		limits.MaxLive = 0 // Anonymous creation has no per-user quota.
 	}
 	now := s.now().UTC()

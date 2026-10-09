@@ -11,14 +11,16 @@ through `ExternalServices.Database`. The caller owns and closes the connection;
   a nonblank `Idempotency-Key` header. It returns HTTP 201 with `short_url`,
   `long_url`, and `expires_at`. `short_url` is a relative `/r/{short_code}` URL.
 - `GET /r/{short_code}` returns HTTP 307 with the original URL in `Location`.
-  Missing, expired, or deactivated links return HTTP 404.
+  Missing, expired, or deactivated links return an HTML page with HTTP 404 and
+  the frontend's `/images/f404_light.png` illustration.
 - Both endpoints are public. There is no authentication middleware, token
   validation, auth environment configuration, or identity/plan request field.
-- Anonymous links expire after 30 days and have no per-user quota. All anonymous
+- Anonymous links expire after 7 days and have no per-user quota. All anonymous
   requests use the nil UUID as their internal owner, so idempotency keys are
   global for anonymous creation. Use a fresh random key for each new creation;
   repeating a key returns the original link, matching the source behavior.
-- Errors use the shared `message`, `slug`, and `details` JSON contract.
+- Errors other than the short-link 404 page use the shared `message`, `slug`, and
+  `details` JSON contract.
 
 For example:
 
@@ -50,7 +52,7 @@ internal caller: free has 5 live links and a 30-day lifetime, pro has 100 and
 180 days, and ultimate has 3,000 and 365 days. When auth is implemented, pass the
 validated identity and purchased plan from the HTTP boundary to `CreateInput`.
 The domain and SQLite repository already support those rules. Anonymous calls
-always use the free lifetime and skip the per-user quota.
+always use a 7-day lifetime and skip the per-user quota.
 
 ## Regeneration
 

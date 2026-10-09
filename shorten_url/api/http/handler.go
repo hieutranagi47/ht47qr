@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"strings"
 
@@ -11,6 +12,9 @@ import (
 )
 
 type Handler struct{ service *app.Service }
+
+//go:embed not_found.html
+var shortURLNotFoundPage string
 
 func NewHandler(service *app.Service) Handler {
 	if service == nil {
@@ -47,6 +51,12 @@ func (h Handler) CreateShortenURL(ctx context.Context, request CreateShortenURLR
 func (h Handler) ResolveShortenURL(ctx context.Context, request ResolveShortenURLRequestObject) (ResolveShortenURLResponseObject, error) {
 	link, err := h.service.Resolve(ctx, request.ShortCode)
 	if err != nil {
+		if errors.Is(err, app.ErrNotFound) || errors.Is(err, domain.ErrInactive) {
+			return ResolveShortenURL404TexthtmlResponse{NotFoundTexthtmlResponse{
+				Body:          strings.NewReader(shortURLNotFoundPage),
+				ContentLength: int64(len(shortURLNotFoundPage)),
+			}}, nil
+		}
 		return nil, resolveErrorResponse(err)
 	}
 	return ResolveShortenURL307Response{Headers: ResolveShortenURL307ResponseHeaders{Location: link.LongURL()}}, nil
@@ -69,9 +79,6 @@ func createErrorResponse(err error) error {
 }
 
 func resolveErrorResponse(err error) error {
-	if errors.Is(err, app.ErrNotFound) || errors.Is(err, domain.ErrInactive) {
-		return common.NewNotFoundError("shorten_url_not_found", "short URL not found").WithInternalError(err)
-	}
 	return common.Error{
 		HttpErrorCode: 500,
 		PublicError:   "could not resolve short URL",

@@ -136,11 +136,11 @@ components:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     NotFound:
-      description: Short URL not found
+      description: HTML page for a missing, expired, or deactivated short URL
       content:
-        application/json:
+        text/html:
           schema:
-            $ref: "#/components/schemas/ErrorResponse"
+            type: string
     InternalServerError:
       description: Unexpected server error
       content:

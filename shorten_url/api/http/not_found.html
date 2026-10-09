@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>404 — Short link not found</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 32px 20px;
+        background: #f7f8f4;
+        color: #082b4d;
+        font-family: system-ui, sans-serif;
+      }
+      main { width: min(100%, 720px); text-align: center; }
+      img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 24px;
+      }
+      h1 { margin: 28px 0 12px; font-size: clamp(1.75rem, 5vw, 2.5rem); }
+      p { margin: 0 auto 28px; max-width: 48ch; line-height: 1.6; }
+      a {
+        display: inline-block;
+        padding: 14px 24px;
+        border-radius: 12px;
+        background: #082b4d;
+        color: #fff;
+        font-weight: 600;
+        text-decoration: none;
+      }
+      a:hover { background: #16476b; }
+      a:focus-visible { outline: 3px solid #082b4d; outline-offset: 4px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="/images/f404_light.png" alt="" width="1536" height="1024" />
+      <h1>404 — Short link not found</h1>
+      <p>This link may have expired, been deactivated, or never existed.</p>
+      <a href="/">Back to home</a>
+    </main>
+  </body>
+</html>

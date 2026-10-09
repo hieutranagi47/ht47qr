@@ -15,6 +15,7 @@ import (
 
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"htqrcode"
@@ -62,7 +63,11 @@ func TestAnonymousHTTPAndPersistence(t *testing.T) {
 	}
 	require.NoError(t, json.Unmarshal(response.Body.Bytes(), &result))
 	require.Regexp(t, `^/r/[0-9A-Za-z]{8}$`, result.ShortURL)
-	require.WithinDuration(t, time.Now().Add(30*24*time.Hour), result.ExpiresAt, 5*time.Second)
+	require.WithinDuration(t, time.Now().Add(7*24*time.Hour), result.ExpiresAt, 5*time.Second)
+	var createdAt, expiresAt int64
+	require.NoError(t, database.QueryRow("SELECT created_at, expires_at FROM shorten_url_links WHERE short_code = ?", strings.TrimPrefix(result.ShortURL, "/r/")).Scan(&createdAt, &expiresAt))
+	require.Equal(t, 7*24*time.Hour, time.Duration(expiresAt-createdAt))
+	require.Equal(t, time.Unix(0, expiresAt).UTC(), result.ExpiresAt)
 	replay := create(service.HTTPHandler(), "request-1", `{"long_url":"https://example.com/a?b=1"}`)
 	require.Equal(t, response.Body.String(), replay.Body.String())
 	// Anonymous callers do not share the free user's five-link quota.
@@ -83,9 +88,28 @@ func TestAnonymousHTTPAndPersistence(t *testing.T) {
 	expired := httptest.NewRecorder()
 	restarted.HTTPHandler().ServeHTTP(expired, httptest.NewRequest(http.MethodGet, result.ShortURL, nil))
 	require.Equal(t, http.StatusNotFound, expired.Code)
+	require.Contains(t, expired.Header().Get("Content-Type"), "text/html")
+	require.Contains(t, expired.Body.String(), "Short link not found")
+	require.Contains(t, expired.Body.String(), `src="/images/f404_light.png"`)
+	require.Contains(t, expired.Body.String(), `href="/"`)
+	require.Empty(t, expired.Header().Get("Location"))
 	missing := httptest.NewRecorder()
 	restarted.HTTPHandler().ServeHTTP(missing, httptest.NewRequest(http.MethodGet, "/r/00000000", nil))
 	require.Equal(t, http.StatusNotFound, missing.Code)
+	require.Equal(t, expired.Body.String(), missing.Body.String())
+
+	_, err = restartedDB.Exec("UPDATE shorten_url_links SET expires_at = ?, deactivated_at = ? WHERE short_code = ?", time.Now().Add(time.Hour).UnixNano(), time.Now().UnixNano(), strings.TrimPrefix(result.ShortURL, "/r/"))
+	require.NoError(t, err)
+	deactivated := httptest.NewRecorder()
+	restarted.HTTPHandler().ServeHTTP(deactivated, httptest.NewRequest(http.MethodGet, result.ShortURL, nil))
+	require.Equal(t, http.StatusNotFound, deactivated.Code)
+	require.Equal(t, expired.Body.String(), deactivated.Body.String())
+
+	image := httptest.NewRecorder()
+	restarted.HTTPHandler().ServeHTTP(image, httptest.NewRequest(http.MethodGet, "/images/f404_light.png", nil))
+	require.Equal(t, http.StatusOK, image.Code)
+	require.Equal(t, "image/png", image.Header().Get("Content-Type"))
+	require.True(t, strings.HasPrefix(image.Body.String(), "\x89PNG\r\n\x1a\n"))
 }
 
 func TestHTTPValidationAndSafeErrors(t *testing.T) {
@@ -111,6 +135,11 @@ func TestHTTPValidationAndSafeErrors(t *testing.T) {
 	require.Equal(t, http.StatusInternalServerError, response.Code)
 	require.NotContains(t, response.Body.String(), "database is closed")
 	require.JSONEq(t, `{"message":"could not create short URL","slug":"shorten_url_creation_failed","details":[]}`, response.Body.String())
+
+	resolve := httptest.NewRecorder()
+	service.HTTPHandler().ServeHTTP(resolve, httptest.NewRequest(http.MethodGet, "/r/00000000", nil))
+	require.Equal(t, http.StatusInternalServerError, resolve.Code)
+	require.JSONEq(t, `{"message":"could not resolve short URL","slug":"shorten_url_resolution_failed","details":[]}`, resolve.Body.String())
 }
 
 func TestConcurrentCreationAcrossSQLitePools(t *testing.T) {
@@ -138,6 +167,11 @@ func TestConcurrentCreationAcrossSQLitePools(t *testing.T) {
 				output, err := services[i%2].Create(context.Background(), input)
 				outcomes <- err
 				if err == nil {
+					lifetime := 30 * 24 * time.Hour
+					if sameKey {
+						lifetime = 7 * 24 * time.Hour
+					}
+					assert.Equal(t, lifetime, output.URL.ExpiresAt().Sub(output.URL.CreatedAt()))
 					ids <- output.URL.ID()
 				}
 			}(i)
