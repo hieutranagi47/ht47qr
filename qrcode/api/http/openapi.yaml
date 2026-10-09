@@ -4,7 +4,7 @@ info:
   version: 1.0.0
   description: OpenAPI contract for qr-code-api routes.
 servers:
-  - url: /api/qr-code/v1
+  - url: /
 paths:
   /health:
     get:

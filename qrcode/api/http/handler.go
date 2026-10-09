@@ -27,7 +27,14 @@ var _ StrictServerInterface = Handler{}
 
 func Register(router common.EchoRouter, generator app.Generator, prefix string) {
 	strict := NewStrictHandler(Handler{generator: generator}, nil)
-	RegisterHandlersWithBaseURL(router, multipartServer{ServerInterface: strict}, prefix)
+
+	RegisterHandlersWithBaseURL(
+		router,
+		multipartServer{
+			ServerInterface: strict,
+		},
+		prefix,
+	)
 }
 
 // multipartServer validates multipart binding before invoking the strict handler.
