@@ -26,7 +26,7 @@ func (m *Module) RegisterContracts(_ context.Context, c *contracts.Contracts) er
 }
 
 func (m *Module) RegisterHttp(_ context.Context, router common.EchoRouter) error {
-	httpAPI.Register(router, m.generator)
+	httpAPI.Register(router, m.generator, "/qrcode/api/v1")
 	return nil
 }
 

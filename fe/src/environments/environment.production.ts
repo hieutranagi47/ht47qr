@@ -1,16 +1,16 @@
 export const environment = {
   production: true,
-  apiEndpoint: 'https://api.ht47.com/api/',
+  apiEndpoint: 'https://ht47qr-five.vercel.app/qrcode/api/',
   apiVersion: 'v1',
   envName: 'prod',
-  host: 'https://ht47-qrcode.vercel.app',
+  host: 'https://ht47qr-five.vercel.app',
   cspConfig: {
-    services: ['https://hieutranprofile.herokuapp.com', 'https://hieutranoath2.herokuapp.com'],
-    galleries: ['https://hieutranprofile.herokuapp.com'],
+    services: ['https://ht47qr-five.vercel.app'],
+    galleries: ['https://ht47qr-five.vercel.app'],
     scriptsElm: [],
-    frames: ['https://hieutranprofile.herokuapp.com'],
+    frames: ['https://ht47qr-five.vercel.app'],
   },
-  cspReport: 'https://hieutranprofile.herokuapp.com/csp-report',
+  cspReport: 'https://ht47qr-five.vercel.app/csp-report',
   authConfig: {
     issuer: '',
     clientId: '',

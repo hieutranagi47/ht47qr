@@ -13,20 +13,21 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/labstack/echo/v5"
 	"htqrcode/common"
 	"htqrcode/qrcode/api/input"
 	"htqrcode/qrcode/app"
 	"htqrcode/qrcode/domain"
+
+	"github.com/labstack/echo/v5"
 )
 
 type Handler struct{ generator app.Generator }
 
 var _ StrictServerInterface = Handler{}
 
-func Register(router common.EchoRouter, generator app.Generator) {
+func Register(router common.EchoRouter, generator app.Generator, prefix string) {
 	strict := NewStrictHandler(Handler{generator: generator}, nil)
-	RegisterHandlers(router, multipartServer{ServerInterface: strict})
+	RegisterHandlersWithBaseURL(router, multipartServer{ServerInterface: strict}, prefix)
 }
 
 // multipartServer validates multipart binding before invoking the strict handler.
