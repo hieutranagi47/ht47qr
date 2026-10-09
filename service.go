@@ -11,6 +11,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	echo "github.com/labstack/echo/v5"
 	"golang.org/x/sync/errgroup"
 
@@ -35,6 +36,11 @@ type ExternalServices struct {
 	FileStorage FileStorage
 	// Database enables SQLite-backed modules. The caller owns its lifetime.
 	Database *sql.DB
+	// Postgres enables PostgreSQL-backed modules and takes precedence over Database.
+	// The caller owns its lifetime.
+	Postgres *pgxpool.Pool
+	// PostgresMigrations optionally uses a direct connection for migrations.
+	PostgresMigrations *pgxpool.Pool
 }
 
 type Service struct {
@@ -57,7 +63,9 @@ func New(
 	moduleContracts := &contracts.Contracts{}
 
 	modules := []module.Module{qrcode.NewModule()}
-	if services.Database != nil {
+	if services.Postgres != nil {
+		modules = append(modules, shorten_url.NewPostgresModule(services.Postgres, services.PostgresMigrations))
+	} else if services.Database != nil {
 		modules = append(modules, shorten_url.NewModule(services.Database))
 	}
 	modules = append(modules, client.NewModule())
@@ -129,6 +137,7 @@ func (s *Service) Run(ctx context.Context, httpPort, httpsPort, ssePort, ssesPor
 		}
 	}
 	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() error { return s.RunBackground(ctx) })
 
 	// Separate listeners keep the streaming surface isolated from ordinary APIs.
 	for _, listener := range []struct {
@@ -257,4 +266,16 @@ func (s *Service) serveGRPC(ctx context.Context, listener net.Listener) error {
 	close(done)
 	<-stopped
 	return err
+}
+
+// RunBackground serves durable module jobs until cancellation. Run starts this
+// automatically; callers embedding HTTPHandler must run it themselves.
+func (s *Service) RunBackground(ctx context.Context) error {
+	g, ctx := errgroup.WithContext(ctx)
+	for _, m := range s.modules {
+		if worker, ok := m.(module.BackgroundModule); ok {
+			g.Go(func() error { return worker.RunBackground(ctx) })
+		}
+	}
+	return g.Wait()
 }

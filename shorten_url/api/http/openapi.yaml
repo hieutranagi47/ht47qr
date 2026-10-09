@@ -34,6 +34,10 @@ paths:
     get:
       operationId: resolveShortenURL
       parameters:
+        - name: User-Agent
+          in: header
+          schema:
+            type: string
         - name: short_code
           in: path
           required: true
@@ -43,6 +47,12 @@ paths:
             maxLength: 8
             pattern: "^[0-9A-Za-z]{8}$"
       responses:
+        "200":
+          description: Metadata HTML for known social preview bots when a snapshot is available
+          content:
+            text/html:
+              schema:
+                type: string
         "307":
           description: Redirect to the active long URL
           headers:

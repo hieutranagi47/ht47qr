@@ -13,6 +13,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"htqrcode"
 	"htqrcode/common/log"
 
@@ -38,24 +39,13 @@ func main() {
 
 	log.Init(slog.LevelInfo)
 
-	dbPath := os.Getenv("SQLITE_PATH")
-	if dbPath == "" {
-		dbPath = "./data/htqrcode.db"
-	}
-	if err := os.MkdirAll(filepath.Dir(dbPath), 0o750); err != nil {
-		panic(fmt.Errorf("could not create SQLite database directory: %w", err))
-	}
-	db, err := sql.Open("sqlite3", dbPath+"?_journal_mode=WAL&_busy_timeout=5000&_foreign_keys=on")
+	services, closeDatabases, err := openDatabases(ctx)
 	if err != nil {
 		panic(err)
 	}
-	defer db.Close()
+	defer closeDatabases()
 
-	if err := waitForDatabase(ctx, db); err != nil {
-		panic(err)
-	}
-
-	svc, err := htqrcode.New(ctx, htqrcode.ExternalServices{Database: db})
+	svc, err := htqrcode.New(ctx, services)
 	if err != nil {
 		panic(err)
 	}
@@ -70,7 +60,11 @@ func main() {
 	}
 }
 
-func waitForDatabase(ctx context.Context, db *sql.DB) error {
+type postgresPinger struct{ *pgxpool.Pool }
+
+func (p postgresPinger) PingContext(ctx context.Context) error { return p.Ping(ctx) }
+
+func waitForDatabase(ctx context.Context, db interface{ PingContext(context.Context) error }) error {
 	startupCtx, cancel := context.WithTimeout(ctx, databaseStartupTimeout)
 	defer cancel()
 
@@ -89,8 +83,65 @@ func waitForDatabase(ctx context.Context, db *sql.DB) error {
 
 		select {
 		case <-startupCtx.Done():
-			return fmt.Errorf("SQLite was not ready within %s: %w", databaseStartupTimeout, lastErr)
+			return fmt.Errorf("database was not ready within %s: %w", databaseStartupTimeout, lastErr)
 		case <-ticker.C:
 		}
 	}
+}
+
+// PostgreSQL is selected only when a connection URL is configured. SQLite
+// keeps its existing file path and connection settings for local deployments.
+func openDatabases(ctx context.Context) (htqrcode.ExternalServices, func(), error) {
+	dsn := firstEnvironment("DATABASE_URL", "POSTGRES_URL")
+	if dsn != "" {
+		pool, err := pgxpool.New(ctx, dsn)
+		if err != nil {
+			return htqrcode.ExternalServices{}, nil, fmt.Errorf("invalid PostgreSQL configuration")
+		}
+		cleanup := func() { pool.Close() }
+		if err := waitForDatabase(ctx, postgresPinger{pool}); err != nil {
+			cleanup()
+			return htqrcode.ExternalServices{}, nil, fmt.Errorf("PostgreSQL startup failed: %w", err)
+		}
+		services := htqrcode.ExternalServices{Postgres: pool}
+		if migrationDSN := firstEnvironment("DATABASE_URL_UNPOOLED", "POSTGRES_URL_NON_POOLING"); migrationDSN != "" {
+			migrationPool, err := pgxpool.New(ctx, migrationDSN)
+			if err != nil {
+				cleanup()
+				return htqrcode.ExternalServices{}, nil, fmt.Errorf("invalid PostgreSQL migration configuration")
+			}
+			cleanup = func() { migrationPool.Close(); pool.Close() }
+			if err := waitForDatabase(ctx, postgresPinger{migrationPool}); err != nil {
+				cleanup()
+				return htqrcode.ExternalServices{}, nil, fmt.Errorf("PostgreSQL migration startup failed: %w", err)
+			}
+			services.PostgresMigrations = migrationPool
+		}
+		return services, cleanup, nil
+	}
+	dbPath := os.Getenv("SQLITE_PATH")
+	if dbPath == "" {
+		dbPath = "./data/htqrcode.db"
+	}
+	if err := os.MkdirAll(filepath.Dir(dbPath), 0o750); err != nil {
+		return htqrcode.ExternalServices{}, nil, fmt.Errorf("could not create SQLite database directory: %w", err)
+	}
+	db, err := sql.Open("sqlite3", dbPath+"?_journal_mode=WAL&_busy_timeout=5000&_foreign_keys=on")
+	if err != nil {
+		return htqrcode.ExternalServices{}, nil, err
+	}
+	if err := waitForDatabase(ctx, db); err != nil {
+		db.Close()
+		return htqrcode.ExternalServices{}, nil, err
+	}
+	return htqrcode.ExternalServices{Database: db}, func() { db.Close() }, nil
+}
+
+func firstEnvironment(names ...string) string {
+	for _, name := range names {
+		if value := os.Getenv(name); value != "" {
+			return value
+		}
+	}
+	return ""
 }

@@ -1,0 +1,17 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "queries"
+    schema: "migrations"
+    gen:
+      go:
+        package: "dbmodels"
+        out: "dbmodels"
+        sql_package: "pgx/v5"
+        emit_empty_slices: true
+        overrides:
+          - db_type: "pg_catalog.int8"
+            nullable: true
+            go_type:
+              import: "database/sql"
+              type: "NullInt64"

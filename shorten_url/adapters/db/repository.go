@@ -73,6 +73,9 @@ func (r *Repository) Create(ctx context.Context, candidate domain.ShortURL, maxL
 		if err != nil {
 			return err
 		}
+		if err := queries.EnqueueMetadata(ctx, inserted.ID); err != nil {
+			return err
+		}
 		result, err = toDomain(inserted)
 		return err
 	})

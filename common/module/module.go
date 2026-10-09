@@ -28,3 +28,8 @@ type Module interface {
 type GRPCModule interface {
 	RegisterGRPC(context.Context, *transport.Server) error
 }
+
+// BackgroundModule runs cancellable jobs alongside the service listeners.
+type BackgroundModule interface {
+	RunBackground(context.Context) error
+}

@@ -60,6 +60,11 @@ type Conflict = ErrorResponse
 // InternalServerError defines model for InternalServerError.
 type InternalServerError = ErrorResponse
 
+// ResolveShortenURLParams defines parameters for ResolveShortenURL.
+type ResolveShortenURLParams struct {
+	UserAgent string `json:"User-Agent,omitempty"`
+}
+
 // CreateShortenURLParams defines parameters for CreateShortenURL.
 type CreateShortenURLParams struct {
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
@@ -70,8 +75,9 @@ type CreateShortenURLJSONRequestBody = CreateShortenURLRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+
 	// (GET /r/{short_code})
-	ResolveShortenURL(ctx *echo.Context, shortCode string) error
+	ResolveShortenURL(ctx *echo.Context, shortCode string, params ResolveShortenURLParams) error
 
 	// (POST /shorten-url)
 	CreateShortenURL(ctx *echo.Context, params CreateShortenURLParams) error
@@ -93,8 +99,28 @@ func (w *ServerInterfaceWrapper) ResolveShortenURL(ctx *echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter short_code: %s", err))
 	}
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ResolveShortenURLParams
+
+	headers := ctx.Request().Header
+	// ------------- Optional header parameter "User-Agent" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("User-Agent")]; found {
+		var UserAgent string
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for User-Agent, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "User-Agent", valueList[0], &UserAgent, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter User-Agent: %s", err))
+		}
+
+		params.UserAgent = UserAgent
+	}
+
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ResolveShortenURL(ctx, shortCode)
+	err = w.Handler.ResolveShortenURL(ctx, shortCode, params)
 	return err
 }
 
@@ -171,12 +197,14 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // RegisterHandlersWithOptions registers handlers using the supplied options,
 // including any per-operation middleware.
 func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options RegisterHandlersOptions) {
+
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
 
 	router.POST(options.BaseURL+"/shorten-url", wrapper.CreateShortenURL, options.OperationMiddlewares["createShortenURL"]...)
 	router.GET(options.BaseURL+"/r/:short_code", wrapper.ResolveShortenURL, options.OperationMiddlewares["resolveShortenURL"]...)
+
 }
 
 type BadRequestJSONResponse ErrorResponse
@@ -193,10 +221,31 @@ type NotFoundTexthtmlResponse struct {
 
 type ResolveShortenURLRequestObject struct {
 	ShortCode string `json:"short_code"`
+	Params    ResolveShortenURLParams
 }
 
 type ResolveShortenURLResponseObject interface {
 	VisitResolveShortenURLResponse(w http.ResponseWriter) error
+}
+
+type ResolveShortenURL200TexthtmlResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+func (response ResolveShortenURL200TexthtmlResponse) VisitResolveShortenURLResponse(w http.ResponseWriter) error {
+
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
 }
 
 type ResolveShortenURL307ResponseHeaders struct {
@@ -216,6 +265,7 @@ func (response ResolveShortenURL307Response) VisitResolveShortenURLResponse(w ht
 type ResolveShortenURL404TexthtmlResponse struct{ NotFoundTexthtmlResponse }
 
 func (response ResolveShortenURL404TexthtmlResponse) VisitResolveShortenURLResponse(w http.ResponseWriter) error {
+
 	w.Header().Set("Content-Type", "text/html")
 	if response.ContentLength != 0 {
 		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
@@ -234,6 +284,7 @@ type ResolveShortenURL500JSONResponse struct {
 }
 
 func (response ResolveShortenURL500JSONResponse) VisitResolveShortenURLResponse(w http.ResponseWriter) error {
+
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
@@ -256,6 +307,7 @@ type CreateShortenURLResponseObject interface {
 type CreateShortenURL201JSONResponse CreateShortenURLResponse
 
 func (response CreateShortenURL201JSONResponse) VisitCreateShortenURLResponse(w http.ResponseWriter) error {
+
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
@@ -269,6 +321,7 @@ func (response CreateShortenURL201JSONResponse) VisitCreateShortenURLResponse(w 
 type CreateShortenURL400JSONResponse struct{ BadRequestJSONResponse }
 
 func (response CreateShortenURL400JSONResponse) VisitCreateShortenURLResponse(w http.ResponseWriter) error {
+
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
@@ -282,6 +335,7 @@ func (response CreateShortenURL400JSONResponse) VisitCreateShortenURLResponse(w 
 type CreateShortenURL409JSONResponse struct{ ConflictJSONResponse }
 
 func (response CreateShortenURL409JSONResponse) VisitCreateShortenURLResponse(w http.ResponseWriter) error {
+
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
@@ -297,6 +351,7 @@ type CreateShortenURL500JSONResponse struct {
 }
 
 func (response CreateShortenURL500JSONResponse) VisitCreateShortenURLResponse(w http.ResponseWriter) error {
+
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
@@ -309,6 +364,7 @@ func (response CreateShortenURL500JSONResponse) VisitCreateShortenURLResponse(w 
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+
 	// (GET /r/{short_code})
 	ResolveShortenURL(ctx context.Context, request ResolveShortenURLRequestObject) (ResolveShortenURLResponseObject, error)
 
@@ -316,10 +372,8 @@ type StrictServerInterface interface {
 	CreateShortenURL(ctx context.Context, request CreateShortenURLRequestObject) (CreateShortenURLResponseObject, error)
 }
 
-type (
-	StrictHandlerFunc    func(ctx *echo.Context, request any) (any, error)
-	StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
-)
+type StrictHandlerFunc func(ctx *echo.Context, request any) (any, error)
+type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
 	return &strictHandler{ssi: ssi, middlewares: middlewares}
@@ -331,10 +385,11 @@ type strictHandler struct {
 }
 
 // ResolveShortenURL operation middleware
-func (sh *strictHandler) ResolveShortenURL(ctx *echo.Context, shortCode string) error {
+func (sh *strictHandler) ResolveShortenURL(ctx *echo.Context, shortCode string, params ResolveShortenURLParams) error {
 	var request ResolveShortenURLRequestObject
 
 	request.ShortCode = shortCode
+	request.Params = params
 
 	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.ResolveShortenURL(ctx.Request().Context(), request.(ResolveShortenURLRequestObject))

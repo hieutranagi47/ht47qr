@@ -54,7 +54,40 @@ ENV SERVER_PORT=8080 \
     SERVER_PORT_TLS=8443 \
     SERVER_SSE_PORT=8081 \
     SERVER_SSE_PORT_TLS=8444 \
-    SQLITE_PATH=/app/data/htqrcode.db
+    SQLITE_PATH=/app/data/htqrcode.d
+
+ENV GOMAXPROCS=2
+ENV GODEBUG=madvdontneed=1,netdns=go,gctrace=1,schedtrace=1000
+ENV GOMEMLIMIT=1800MiB
+ENV GOGC=90
+ENV TZ=Asia/Ho_Chi_Minh
+ENV SERVER_PORT="8888"
+ENV SERVER_PORT_TLS="8443"
+ENV SERVER_SSE_PORT="8886"
+ENV SERVER_SSE_PORT_TLS="8446"
+# NEO
+# Recommended for most uses
+ENV DATABASE_URL=postgresql://neondb_owner:npg_DyRMXAno0V8Z@ep-purple-wildflower-b3zfpjn0-pooler.c-4.ap-southeast-1.aws.neon.tech/neondb?channel_binding=require&sslmode=require
+
+# For uses requiring a connection without pgbouncer
+ENV DATABASE_URL_UNPOOLED=postgresql://neondb_owner:npg_DyRMXAno0V8Z@ep-purple-wildflower-b3zfpjn0.c-4.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+
+# Parameters for constructing your own connection string
+ENV PGHOST=ep-purple-wildflower-b3zfpjn0-pooler.c-4.ap-southeast-1.aws.neon.tech
+ENV ENV PGHOST_UNPOOLED=ep-purple-wildflower-b3zfpjn0.c-4.ap-southeast-1.aws.neon.tech
+ENV PGUSER=neondb_owner
+ENV PGDATABASE=neondb
+ENV PGPASSWORD=npg_DyRMXAno0V8Z
+
+# Parameters for Vercel Postgres Templates
+ENV POSTGRES_URL=postgresql://neondb_owner:npg_DyRMXAno0V8Z@ep-purple-wildflower-b3zfpjn0-pooler.c-4.ap-southeast-1.aws.neon.tech/neondb?channel_binding=require&sslmode=require
+ENV POSTGRES_URL_NON_POOLING=postgresql://neondb_owner:npg_DyRMXAno0V8Z@ep-purple-wildflower-b3zfpjn0.c-4.ap-southeast-1.aws.neon.tech/neondb?channel_binding=require&sslmode=require
+ENV POSTGRES_USER=neondb_owner
+ENV POSTGRES_HOST=ep-purple-wildflower-b3zfpjn0-pooler.c-4.ap-southeast-1.aws.neon.tech
+ENV POSTGRES_PASSWORD=npg_DyRMXAno0V8Z
+ENV POSTGRES_DATABASE=neondb
+ENV POSTGRES_URL_NO_SSL=postgresql://neondb_owner:npg_DyRMXAno0V8Z@ep-purple-wildflower-b3zfpjn0-pooler.c-4.ap-southeast-1.aws.neon.tech/neondb
+ENV POSTGRES_PRISMA_URL=postgresql://neondb_owner:npg_DyRMXAno0V8Z@ep-purple-wildflower-b3zfpjn0-pooler.c-4.ap-southeast-1.aws.neon.tech/neondb?channel_binding=require&connect_timeout=15&sslmode=require
 
 EXPOSE 8080 8081 8443 8444
 VOLUME ["/app/data"]

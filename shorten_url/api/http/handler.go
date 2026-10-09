@@ -1,30 +1,35 @@
 package http
 
 import (
+	"bytes"
 	"context"
 	_ "embed"
 	"errors"
 	"strings"
 
 	"htqrcode/common"
+	"htqrcode/common/log"
 	"htqrcode/shorten_url/app"
 	"htqrcode/shorten_url/domain"
 )
 
-type Handler struct{ service *app.Service }
+type Handler struct {
+	service  *app.Service
+	metadata *app.MetadataService
+}
 
 //go:embed not_found.html
 var shortURLNotFoundPage string
 
-func NewHandler(service *app.Service) Handler {
+func NewHandler(service *app.Service, metadata *app.MetadataService) Handler {
 	if service == nil {
 		panic("short URL service is required")
 	}
-	return Handler{service: service}
+	return Handler{service: service, metadata: metadata}
 }
 
 func Register(_ context.Context, e common.EchoRouter, h Handler) error {
-	RegisterHandlers(e, NewStrictHandler(h, nil))
+	RegisterHandlers(e, NewStrictHandler(h, []StrictMiddlewareFunc{previewCacheMiddleware}))
 	return nil
 }
 
@@ -58,6 +63,19 @@ func (h Handler) ResolveShortenURL(ctx context.Context, request ResolveShortenUR
 			}}, nil
 		}
 		return nil, resolveErrorResponse(err)
+	}
+	if h.metadata != nil && isSocialPreviewBot(request.Params.UserAgent) {
+		snapshot, err := h.metadata.Get(ctx, link.ID())
+		if err == nil && snapshot.Available() {
+			page, err := renderPreview(snapshot, link.LongURL())
+			if err != nil {
+				return nil, resolveErrorResponse(err)
+			}
+			return ResolveShortenURL200TexthtmlResponse{Body: bytes.NewReader(page), ContentLength: int64(len(page))}, nil
+		}
+		if err != nil && !errors.Is(err, app.ErrMetadataUnavailable) {
+			log.FromContext(ctx).Warn("could not read link metadata", "link_id", link.ID(), "error", err)
+		}
 	}
 	return ResolveShortenURL307Response{Headers: ResolveShortenURL307ResponseHeaders{Location: link.LongURL()}}, nil
 }

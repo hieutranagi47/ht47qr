@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<title>{{.Title}}</title>
+{{if .Description}}<meta name="description" content="{{.Description}}">{{end}}
+<link rel="canonical" href="{{.URL}}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{.URL}}">
+<meta property="og:title" content="{{.Title}}">
+{{if .Description}}<meta property="og:description" content="{{.Description}}">{{end}}
+{{if .ImageURL}}<meta property="og:image" content="{{.ImageURL}}">{{end}}
+<meta name="twitter:card" content="{{if .ImageURL}}summary_large_image{{else}}summary{{end}}">
+<meta name="twitter:title" content="{{.Title}}">
+{{if .Description}}<meta name="twitter:description" content="{{.Description}}">{{end}}
+{{if .ImageURL}}<meta name="twitter:image" content="{{.ImageURL}}">{{end}}
+</head>
+<body></body>
+</html>

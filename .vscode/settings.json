@@ -3,8 +3,12 @@
         "APIFS",
         "errgroup",
         "htqrcode",
+        "iofs",
+        "jackc",
         "labstack",
+        "pgxpool",
         "qrcode",
+        "stdlib",
         "UIHTML"
     ]
 }
