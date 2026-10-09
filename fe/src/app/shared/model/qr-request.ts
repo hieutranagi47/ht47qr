@@ -99,10 +99,17 @@ export type QRCodePayload<T> = {
   is_custom_shape: boolean;
 };
 
-export type APIErrorResponse = {
-  error_code: number;
-  error_message: string;
-  error_details?: string;
+export type APIErrorDetail = {
+  entity_type: string;
+  entity_id: string;
+  error_slug: string;
+  message: string;
 };
 
-export type QRCodeResponse = Blob | APIErrorResponse;
+export type APIErrorResponse = {
+  message: string;
+  slug: string;
+  details: APIErrorDetail[];
+};
+
+export type QRCodeResponse = Blob;

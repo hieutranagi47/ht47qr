@@ -104,57 +104,57 @@ func (m MessageRequest) Payload() (string, error) {
 	switch m.Type {
 	case MessageTypeWifi:
 		if !required(m.WifiName, m.Password) {
-			return "", fmt.Errorf("missing required fields for %s type", m.Type)
+			return "", fmt.Errorf("Required fields are missing for the %s QR code.", m.Type)
 		}
 		return WifiData(m.WifiName, m.Password), nil
 	case MessageTypeSms:
 		if !required(m.PhoneNumber, m.Message) {
-			return "", fmt.Errorf("missing required fields for %s type", m.Type)
+			return "", fmt.Errorf("Required fields are missing for the %s QR code.", m.Type)
 		}
 		return SmsData(m.PhoneNumber, m.Message), nil
 	case MessageTypeMail:
 		if !required(m.Email, m.Subject, m.Body) {
-			return "", fmt.Errorf("missing required fields for %s type", m.Type)
+			return "", fmt.Errorf("Required fields are missing for the %s QR code.", m.Type)
 		}
 		return MailData(m.Email, m.Subject, m.Body), nil
 	case MessageTypeMailTo:
 		if !required(m.Email, m.Subject, m.Body) {
-			return "", fmt.Errorf("missing required fields for %s type", m.Type)
+			return "", fmt.Errorf("Required fields are missing for the %s QR code.", m.Type)
 		}
 		return MailDataTo(m.Email, m.Subject, m.Body), nil
 	case MessageTypeGeo:
 		if !required(m.Latitude, m.Longitude) {
-			return "", fmt.Errorf("missing required fields for %s type", m.Type)
+			return "", fmt.Errorf("Required fields are missing for the %s QR code.", m.Type)
 		}
 		return GeoData(m.Latitude, m.Longitude, m.Label), nil
 	case MessageTypeTel:
 		if !required(m.PhoneNumber) {
-			return "", fmt.Errorf("missing required fields for %s type", m.Type)
+			return "", fmt.Errorf("Required fields are missing for the %s QR code.", m.Type)
 		}
 		return TelData(m.PhoneNumber), nil
 	case MessageTypeContact:
 		if !required(m.Name, m.Phone, m.Email) {
-			return "", fmt.Errorf("missing required fields for %s type", m.Type)
+			return "", fmt.Errorf("Required fields are missing for the %s QR code.", m.Type)
 		}
 		return ContactData(m.Name, m.Phone, m.Email), nil
 	case MessageTypeVCard:
 		if !required(m.Name, m.Phone, m.Email, m.Organization, m.Title, m.Address, m.Website) {
-			return "", fmt.Errorf("missing required fields for %s type", m.Type)
+			return "", fmt.Errorf("Required fields are missing for the %s QR code.", m.Type)
 		}
 		return VCardData(m.Name, m.Phone, m.Email, m.Organization, m.Title, m.Address, m.Website), nil
 	case MessageTypeCalendar:
 		if !required(m.Summary, m.StartTime, m.EndTime) {
-			return "", fmt.Errorf("missing required fields for %s type", m.Type)
+			return "", fmt.Errorf("Required fields are missing for the %s QR code.", m.Type)
 		}
 		return CalendarData(m.Summary, m.Location, m.Description, m.StartTime, m.EndTime), nil
 	case MessageTypeICal:
 		if !required(m.Summary, m.StartTime, m.EndTime) {
-			return "", fmt.Errorf("missing required fields for %s type", m.Type)
+			return "", fmt.Errorf("Required fields are missing for the %s QR code.", m.Type)
 		}
 		return ICalData(m.Summary, m.StartTime, m.EndTime), nil
 	default:
 		if m.Text == "" {
-			return "", fmt.Errorf("text is required for text type")
+			return "", fmt.Errorf("Text is required.")
 		}
 		return m.Text, nil
 	}

@@ -154,9 +154,20 @@
   
     <button
       type="submit"
-      [disabled]="qrCodeTextForm().invalid() || !qrCodeTextForm().dirty()"
+      [disabled]="isLoading() || qrCodeTextForm().invalid() || !qrCodeTextForm().dirty()"
       class="btn btn-primary f-button"
     >Generate QR Code</button>
   </form>
-  @if (error()) {<p class="error">{{ error() }}</p>}
+  @if (error(); as response) {
+    <div class="error" role="alert">
+      <p>{{ response.message }}</p>
+      @if (response.details.length) {
+        <ul>
+          @for (detail of response.details; track $index) {
+            <li>{{ detail.message }}</li>
+          }
+        </ul>
+      }
+    </div>
+  }
 }

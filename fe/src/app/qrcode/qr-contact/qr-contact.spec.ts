@@ -1,3 +1,4 @@
+import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { QrContact } from './qr-contact';
@@ -8,9 +9,9 @@ describe('QrContact', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [QrContact]
-    })
-    .compileComponents();
+      providers: [provideHttpClient()],
+      imports: [QrContact],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(QrContact);
     component = fixture.componentInstance;

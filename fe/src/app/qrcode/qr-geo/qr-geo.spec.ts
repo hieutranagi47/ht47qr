@@ -1,3 +1,4 @@
+import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { QrGeo } from './qr-geo';
@@ -8,9 +9,9 @@ describe('QrGeo', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [QrGeo]
-    })
-    .compileComponents();
+      providers: [provideHttpClient()],
+      imports: [QrGeo],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(QrGeo);
     component = fixture.componentInstance;

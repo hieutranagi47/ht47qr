@@ -18,6 +18,9 @@ import (
 
 	"htqrcode"
 	"htqrcode/common"
+	"htqrcode/qrcode/adapters"
+	qrhttp "htqrcode/qrcode/api/http"
+	"htqrcode/qrcode/app"
 
 	"github.com/makiuchi-d/gozxing"
 	decoder "github.com/makiuchi-d/gozxing/qrcode"
@@ -47,7 +50,7 @@ func generate(t *testing.T, server *httptest.Server, fields map[string]string, f
 		require.NoError(t, err)
 	}
 	require.NoError(t, writer.Close())
-	response, err := server.Client().Post(server.URL+"/api/v1/generate-qrcode", writer.FormDataContentType(), &body)
+	response, err := server.Client().Post(server.URL+"/api/qrcode/v1/generate-qrcode", writer.FormDataContentType(), &body)
 	require.NoError(t, err)
 	t.Cleanup(func() { response.Body.Close() })
 	return response
@@ -64,7 +67,7 @@ func decodePNG(t *testing.T, response *http.Response) image.Image {
 
 func TestHealthAndGreeting(t *testing.T) {
 	server := startService(t)
-	for path, expected := range map[string]string{"/health": "OK", "/api/v1/very-first-api": "My Handler v1"} {
+	for path, expected := range map[string]string{"/health": "OK", "/api/qrcode/v1/very-first-api": "My Handler v1"} {
 		t.Run(path, func(t *testing.T) {
 			response, err := server.Client().Get(server.URL + path)
 			require.NoError(t, err)
@@ -165,18 +168,25 @@ func assertBad(t *testing.T, response *http.Response, field string) {
 	require.Equal(t, 400, response.StatusCode)
 	require.Contains(t, response.Header.Get("Content-Type"), "application/json")
 	body := decodeError(t, response)
-	require.Equal(t, "invalid_input", body.Slug)
-	require.NotEmpty(t, body.Message)
+	require.Equal(t, "form_validation", body.Slug)
+	require.Equal(t, "Please correct the form and try again.", body.Message)
+	require.Len(t, body.Details, 1)
+	require.NotEmpty(t, body.Details[0].Message)
 	require.Equal(t, []common.HttpErrorDetail{{
 		EntityType: "form_field",
-		EntityID:   field,
-		ErrorSlug:  "invalid_input",
-		Message:    body.Message,
+		EntityID:   "invalid_input_" + field,
+		ErrorSlug:  field,
+		Message:    body.Details[0].Message,
 	}}, body.Details)
 }
 
 func TestQRValidation(t *testing.T) {
-	server := startService(t)
+	// Exercise the HTTP error contract without the service rate limiter
+	// intercepting the many invalid requests in this table.
+	router := common.NewEcho(common.EchoConfig{})
+	qrhttp.Register(router, app.NewGenerator(adapters.Renderer{}), "/api/qrcode/v1")
+	server := httptest.NewServer(router)
+	t.Cleanup(server.Close)
 	for _, data := range []string{"", "{", "null", "[]", `{"text":""}`} {
 		t.Run("data/"+data, func(t *testing.T) { assertBad(t, generate(t, server, map[string]string{"data": data}, nil), "data") })
 	}
@@ -201,7 +211,7 @@ func TestQRValidation(t *testing.T) {
 	}
 	assertBad(t, generate(t, server, map[string]string{"data": `{"text":"hello"}`}, map[string][]byte{"logo_img": testImage(t, 501, false)}), "logo_img")
 	for _, contentType := range []string{"application/json", "multipart/form-data", "multipart/form-data; boundary=broken", "multipart/form-data; boundary=\"broken"} {
-		response, err := server.Client().Post(server.URL+"/api/v1/generate-qrcode", contentType, strings.NewReader("invalid"))
+		response, err := server.Client().Post(server.URL+"/api/qrcode/v1/generate-qrcode", contentType, strings.NewReader("invalid"))
 		require.NoError(t, err)
 		defer response.Body.Close()
 		assertBad(t, response, "data")
@@ -214,7 +224,7 @@ func TestQRRenderingFailure(t *testing.T) {
 	require.Equal(t, 500, response.StatusCode)
 	body := decodeError(t, response)
 	require.Equal(t, "qr_code_generation_failed", body.Slug)
-	require.Equal(t, "failed to generate qr code", body.Message)
+	require.Equal(t, "Unable to generate the QR code. Please try again.", body.Message)
 	require.Empty(t, body.Details)
 }
 
@@ -288,7 +298,7 @@ func TestRoutingErrorsUseSharedContract(t *testing.T) {
 		handler http.Handler
 		paths   []string
 	}{
-		{"http", service.HTTPHandler(), []string{"/health", "/api/v1/very-first-api", "/api/v1/generate-qrcode"}},
+		{"http", service.HTTPHandler(), []string{"/health", "/api/qrcode/v1/very-first-api", "/api/qrcode/v1/generate-qrcode"}},
 		{"sse", service.SSEHandler(), []string{"/health", "/sse/qrcode/heartbeat"}},
 	} {
 		t.Run(router.name, func(t *testing.T) {

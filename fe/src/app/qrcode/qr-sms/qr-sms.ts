@@ -1,3 +1,5 @@
+import { finalize } from 'rxjs';
+import { APIErrorResponse } from '@app/shared/model/qr-request';
 import { Component, computed, inject, signal } from '@angular/core';
 import { AppStore } from '@app/app-store';
 import {
@@ -39,23 +41,25 @@ const initFormData: QRCodePayload<QRCodeSmsPayload> = {
 export class QrSms {
   readonly appStore = inject(AppStore);
   readonly isLoading = signal(false);
-  readonly error = signal<string | null>(null);
+  readonly error = signal<APIErrorResponse | null>(null);
   readonly imgBlob = signal<string>('');
   protected readonly qrCodePayload = signal<QRCodePayload<QRCodeSmsPayload>>(initFormData);
   protected readonly qrCodeTextForm = form(this.qrCodePayload, (path) => {
-    required(path.data.phone_number, { message: 'The Phone number is required' });
+    required(path.data.phone_number, { message: 'Phone number is required.' });
     pattern(path.data.phone_number, /^[+]{1}(?:[0-9\-\\(\\)\\/.]\s?){6,15}[0-9]{1}$/, {
-      message: 'Wrong phone number format, ie: +84912346789',
+      message: 'Enter a valid phone number, for example +84912346789.',
     });
-    required(path.data.message, { message: 'Message is required' });
+    required(path.data.message, { message: 'Message is required.' });
     minLength(path.data.message, 10, {
-      message: 'Message length must be greater than 10 characters',
+      message: 'Message must contain at least 10 characters.',
     });
-    maxLength(path.data.message, 255, { message: 'Text length must be less than 10 characters' });
-    min(path.qr_width, 5, { message: 'Size of the QR Code must be 5 -> 21' });
-    max(path.qr_width, 21, { message: 'Size of the QR Code must be 5 -> 21' });
-    min(path.border_width, 0, { message: 'Border width must be 0 -> 20' });
-    max(path.border_width, 20, { message: 'Border width must be 0 -> 20' });
+    maxLength(path.data.message, 255, {
+      message: 'Message must contain no more than 255 characters.',
+    });
+    min(path.qr_width, 6, { message: 'QR width must be between 6 and 21.' });
+    max(path.qr_width, 21, { message: 'QR width must be between 6 and 21.' });
+    min(path.border_width, 0, { message: 'Border width must be between 0 and 20.' });
+    max(path.border_width, 20, { message: 'Border width must be between 0 and 20.' });
   });
   previewLogoImg = computed(() => {
     const logo = this.qrCodeTextForm.logo_img().value();
@@ -74,22 +78,23 @@ export class QrSms {
 
   onSubmit($event: Event) {
     $event.preventDefault();
+    if (this.isLoading() || this.qrCodeTextForm().invalid()) return;
     this.isLoading.set(true);
     this.error.set(null);
 
-    this.appStore.generateQRCodeWithHttpClient(this.qrCodeTextForm().value()).subscribe({
-      next: (response) => {
-        if (response instanceof Blob) {
-          this.imgBlob.set(URL.createObjectURL(response));
-        }
-      },
-      error: (err) => {
-        this.error.set(err?.error?.error_message || 'An unexpected error occurred.');
-      },
-      complete: () => {
-        this.isLoading.set(false);
-      },
-    });
+    this.appStore
+      .generateQRCodeWithHttpClient(this.qrCodeTextForm().value())
+      .pipe(finalize(() => this.isLoading.set(false)))
+      .subscribe({
+        next: (response) => {
+          if (response instanceof Blob) {
+            this.imgBlob.set(URL.createObjectURL(response));
+          }
+        },
+        error: (err: APIErrorResponse) => {
+          this.error.set(err);
+        },
+      });
   }
 
   addLogo($event: Event): void {
@@ -122,5 +127,6 @@ export class QrSms {
     this.qrCodeTextForm().controlValue.set(initFormData);
     this.qrCodeTextForm().reset();
     this.imgBlob.set('');
+    this.error.set(null);
   }
 }

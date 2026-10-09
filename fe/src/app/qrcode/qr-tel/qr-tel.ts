@@ -1,3 +1,5 @@
+import { finalize } from 'rxjs';
+import { APIErrorResponse } from '@app/shared/model/qr-request';
 import { Component, computed, inject, signal } from '@angular/core';
 import { AppStore } from '@app/app-store';
 import { form, FormField, required, min, max, pattern } from '@angular/forms/signals';
@@ -30,18 +32,18 @@ export class QrTel {
   readonly appStore = inject(AppStore);
   readonly isLoading = signal(false);
   readonly showColorPickerModal = signal(false);
-  readonly error = signal<string | null>(null);
+  readonly error = signal<APIErrorResponse | null>(null);
   readonly imgBlob = signal<string>('');
   protected readonly qrCodePayload = signal<QRCodePayload<QRCodeTelPayload>>(initFormData);
   protected readonly qrCodeTextForm = form(this.qrCodePayload, (path) => {
-    required(path.data.phone_number, { message: 'The Phone number is required' });
+    required(path.data.phone_number, { message: 'Phone number is required.' });
     pattern(path.data.phone_number, /^[+]{1}(?:[0-9\-\\(\\)\\/.]\s?){6,15}[0-9]{1}$/, {
-      message: 'Wrong phone number format, ie: +84912346789',
+      message: 'Enter a valid phone number, for example +84912346789.',
     });
-    min(path.qr_width, 5, { message: 'Size of the QR Code must be 5 -> 21' });
-    max(path.qr_width, 21, { message: 'Size of the QR Code must be 5 -> 21' });
-    min(path.border_width, 0, { message: 'Border width must be 0 -> 20' });
-    max(path.border_width, 20, { message: 'Border width must be 0 -> 20' });
+    min(path.qr_width, 6, { message: 'QR width must be between 6 and 21.' });
+    max(path.qr_width, 21, { message: 'QR width must be between 6 and 21.' });
+    min(path.border_width, 0, { message: 'Border width must be between 0 and 20.' });
+    max(path.border_width, 20, { message: 'Border width must be between 0 and 20.' });
   });
   previewLogoImg = computed(() => {
     const logo = this.qrCodeTextForm.logo_img().value();
@@ -60,22 +62,23 @@ export class QrTel {
 
   onSubmit($event: Event) {
     $event.preventDefault();
+    if (this.isLoading() || this.qrCodeTextForm().invalid()) return;
     this.isLoading.set(true);
     this.error.set(null);
 
-    this.appStore.generateQRCodeWithHttpClient(this.qrCodeTextForm().value()).subscribe({
-      next: (response) => {
-        if (response instanceof Blob) {
-          this.imgBlob.set(URL.createObjectURL(response));
-        }
-      },
-      error: (err) => {
-        this.error.set(err?.error?.error_message || 'An unexpected error occurred.');
-      },
-      complete: () => {
-        this.isLoading.set(false);
-      },
-    });
+    this.appStore
+      .generateQRCodeWithHttpClient(this.qrCodeTextForm().value())
+      .pipe(finalize(() => this.isLoading.set(false)))
+      .subscribe({
+        next: (response) => {
+          if (response instanceof Blob) {
+            this.imgBlob.set(URL.createObjectURL(response));
+          }
+        },
+        error: (err: APIErrorResponse) => {
+          this.error.set(err);
+        },
+      });
   }
 
   addLogo($event: Event): void {
@@ -116,5 +119,6 @@ export class QrTel {
     this.qrCodeTextForm().controlValue.set(initFormData);
     this.qrCodeTextForm().reset();
     this.imgBlob.set('');
+    this.error.set(null);
   }
 }

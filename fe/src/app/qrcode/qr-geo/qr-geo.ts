@@ -1,3 +1,5 @@
+import { finalize } from 'rxjs';
+import { APIErrorResponse } from '@app/shared/model/qr-request';
 import { Component, computed, inject, signal } from '@angular/core';
 import { AppStore } from '@app/app-store';
 import {
@@ -40,24 +42,24 @@ const initFormData: QRCodePayload<QRCodeGeoPayload> = {
 export class QrGeo {
   readonly appStore = inject(AppStore);
   readonly isLoading = signal(false);
-  readonly error = signal<string | null>(null);
+  readonly error = signal<APIErrorResponse | null>(null);
   readonly imgBlob = signal<string>('');
   protected readonly qrCodePayload = signal<QRCodePayload<QRCodeGeoPayload>>(initFormData);
   protected readonly qrCodeTextForm = form(this.qrCodePayload, (path) => {
-    required(path.data.latitude, { message: 'Latitude number is required' });
+    required(path.data.latitude, { message: 'Latitude is required.' });
     pattern(path.data.latitude, /^-?(180(\.0{1,10})?|((1[0-7]\d)|([1-9]?\d))(\.\d{1,10})?)$/, {
-      message: 'Wrong latitude format, ie: 10.801379',
+      message: 'Enter a valid latitude, for example 10.801379.',
     });
-    required(path.data.longitude, { message: 'Name is required' });
+    required(path.data.longitude, { message: 'Longitude is required.' });
     pattern(path.data.longitude, /^-?(180(\.0{1,10})?|((1[0-7]\d)|([1-9]?\d))(\.\d{1,10})?)$/, {
-      message: 'Wrong longitude format, ie: 106.711273',
+      message: 'Enter a valid longitude, for example 106.711273.',
     });
-    minLength(path.data.label, 3, { message: 'From 3 characters' });
-    maxLength(path.data.label, 250, { message: 'Must less than 250 characters' });
-    min(path.qr_width, 5, { message: 'Size of the QR Code must be 5 -> 21' });
-    max(path.qr_width, 21, { message: 'Size of the QR Code must be 5 -> 21' });
-    min(path.border_width, 0, { message: 'Border width must be 0 -> 20' });
-    max(path.border_width, 20, { message: 'Border width must be 0 -> 20' });
+    minLength(path.data.label, 3, { message: 'Label must contain at least 3 characters.' });
+    maxLength(path.data.label, 250, { message: 'Label must contain no more than 250 characters.' });
+    min(path.qr_width, 6, { message: 'QR width must be between 6 and 21.' });
+    max(path.qr_width, 21, { message: 'QR width must be between 6 and 21.' });
+    min(path.border_width, 0, { message: 'Border width must be between 0 and 20.' });
+    max(path.border_width, 20, { message: 'Border width must be between 0 and 20.' });
   });
   previewLogoImg = computed(() => {
     const logo = this.qrCodeTextForm.logo_img().value();
@@ -76,22 +78,23 @@ export class QrGeo {
 
   onSubmit($event: Event) {
     $event.preventDefault();
+    if (this.isLoading() || this.qrCodeTextForm().invalid()) return;
     this.isLoading.set(true);
     this.error.set(null);
 
-    this.appStore.generateQRCodeWithHttpClient(this.qrCodeTextForm().value()).subscribe({
-      next: (response) => {
-        if (response instanceof Blob) {
-          this.imgBlob.set(URL.createObjectURL(response));
-        }
-      },
-      error: (err) => {
-        this.error.set(err?.error?.error_message || 'An unexpected error occurred.');
-      },
-      complete: () => {
-        this.isLoading.set(false);
-      },
-    });
+    this.appStore
+      .generateQRCodeWithHttpClient(this.qrCodeTextForm().value())
+      .pipe(finalize(() => this.isLoading.set(false)))
+      .subscribe({
+        next: (response) => {
+          if (response instanceof Blob) {
+            this.imgBlob.set(URL.createObjectURL(response));
+          }
+        },
+        error: (err: APIErrorResponse) => {
+          this.error.set(err);
+        },
+      });
   }
 
   addLogo($event: Event): void {
@@ -124,5 +127,6 @@ export class QrGeo {
     this.qrCodeTextForm().controlValue.set(initFormData);
     this.qrCodeTextForm().reset();
     this.imgBlob.set('');
+    this.error.set(null);
   }
 }

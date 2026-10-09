@@ -94,7 +94,7 @@ paths:
                 type: string
                 format: binary
         "400":
-          description: Validation error
+          description: 'Form validation error. slug is form_validation; details identify fields using entity_type=form_field, entity_id=invalid_input_<field>, and error_slug=<field>. Display the summary message and each detail message.'
           content:
             application/json:
               schema:

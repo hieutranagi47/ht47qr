@@ -44,7 +44,7 @@ func (s multipartServer) PostV1GenerateQrCode(c *echo.Context) error {
 	c.Request().Body = nethttp.MaxBytesReader(c.Response(), c.Request().Body, 8<<20)
 	mediaType, params, err := mime.ParseMediaType(c.Request().Header.Get("Content-Type"))
 	if err != nil || mediaType != "multipart/form-data" || params["boundary"] == "" {
-		return invalidInput("invalid multipart request", "data").WithInternalError(err)
+		return invalidInput("Invalid multipart request.", "data").WithInternalError(err)
 	}
 	return s.ServerInterface.PostV1GenerateQrCode(c)
 }
@@ -58,10 +58,16 @@ func (Handler) GetV1VeryFirstApi(context.Context, GetV1VeryFirstApiRequestObject
 }
 
 func invalidInput(message, field string) common.Error {
-	return common.NewInvalidInputError("invalid_input", "%s", message).WithDetails([]common.ErrorDetails{{
+	if label := map[string]string{
+		"logo_img": "Logo", "halftone_img": "Halftone image",
+		"is_circle_shape": "Circle shape", "is_custom_shape": "Custom shape",
+	}[field]; label != "" {
+		message = label + ": " + message
+	}
+	return common.NewInvalidInputError("form_validation", "Please correct the form and try again.").WithDetails([]common.ErrorDetails{{
 		EntityType: "form_field",
-		EntityID:   field,
-		ErrorSlug:  "invalid_input",
+		EntityID:   fmt.Sprintf(`invalid_input_%s`, field),
+		ErrorSlug:  field,
 		Message:    message,
 	}})
 }
@@ -73,7 +79,7 @@ func bad(message, field string) (PostV1GenerateQrCodeResponseObject, error) {
 func (h Handler) PostV1GenerateQrCode(ctx context.Context, request PostV1GenerateQrCodeRequestObject) (PostV1GenerateQrCodeResponseObject, error) {
 	form, err := request.Body.ReadForm(6 << 20)
 	if err != nil {
-		return bad("invalid multipart request", "data")
+		return bad("Invalid multipart request.", "data")
 	}
 	defer form.RemoveAll()
 	value := func(name string) string {
@@ -84,11 +90,11 @@ func (h Handler) PostV1GenerateQrCode(ctx context.Context, request PostV1Generat
 		return v[0]
 	}
 	if value("data") == "" {
-		return bad("data is required", "data")
+		return bad("QR code data is required.", "data")
 	}
 	var body MessageRequest
 	if err := json.Unmarshal([]byte(value("data")), &body); err != nil {
-		return bad("invalid data format", "data")
+		return bad("QR code data must be valid JSON.", "data")
 	}
 	message := domain.MessageRequest{
 		Type:         domain.MessageType(body.Type),
@@ -121,15 +127,16 @@ func (h Handler) PostV1GenerateQrCode(ctx context.Context, request PostV1Generat
 	options := app.Options{Width: 10, Border: 10}
 	for _, param := range []struct {
 		name     string
+		label    string
 		min, max int
 		target   *int
 	}{
-		{"qr_width", 6, 255, nil}, {"border_width", 0, 1024, &options.Border},
+		{"qr_width", "QR width", 6, 255, nil}, {"border_width", "Border width", 0, 1024, &options.Border},
 	} {
 		if raw := value(param.name); raw != "" {
 			n, err := strconv.Atoi(raw)
 			if err != nil || n < param.min || n > param.max {
-				return bad(fmt.Sprintf("%s must be between %d and %d", param.name, param.min, param.max), param.name)
+				return bad(fmt.Sprintf("%s must be between %d and %d.", param.label, param.min, param.max), param.name)
 			}
 			if param.target == nil {
 				options.Width = uint8(n)
@@ -145,14 +152,14 @@ func (h Handler) PostV1GenerateQrCode(ctx context.Context, request PostV1Generat
 		if raw := value(param.name); raw != "" {
 			b, err := strconv.ParseBool(raw)
 			if err != nil {
-				return bad("invalid boolean value", param.name)
+				return bad("The value must be true or false.", param.name)
 			}
 			*param.target = b
 		}
 	}
 	options.Foreground = value("foreground_color")
 	if options.Foreground != "" && !hexColor.MatchString(options.Foreground) {
-		return bad("foreground_color must be a six-digit hex color", "foreground_color")
+		return bad("Foreground color must be a six-digit hex color.", "foreground_color")
 	}
 	for _, name := range []string{"logo_img", "halftone_img"} {
 		files := form.File[name]
@@ -177,7 +184,7 @@ func (h Handler) PostV1GenerateQrCode(ctx context.Context, request PostV1Generat
 	if err != nil {
 		return nil, common.Error{
 			HttpErrorCode: nethttp.StatusInternalServerError,
-			PublicError:   "failed to generate qr code",
+			PublicError:   "Unable to generate the QR code. Please try again.",
 			ErrorSlug:     "qr_code_generation_failed",
 			InternalError: err,
 		}
@@ -189,16 +196,16 @@ var hexColor = regexp.MustCompile(`^#?[0-9a-fA-F]{6}$`)
 
 func readImage(file *multipart.FileHeader, limit int64, maxDimension int) ([]byte, image.Image, error) {
 	if file.Size > limit {
-		return nil, nil, fmt.Errorf("image exceeds maximum file size")
+		return nil, nil, fmt.Errorf("Image exceeds the maximum file size.")
 	}
 	f, err := file.Open()
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot open image")
+		return nil, nil, fmt.Errorf("Unable to open the image.")
 	}
 	defer f.Close()
 	data, err := io.ReadAll(io.LimitReader(f, limit+1))
 	if err != nil || int64(len(data)) > limit {
-		return nil, nil, fmt.Errorf("cannot read image within size limit")
+		return nil, nil, fmt.Errorf("Unable to read the image within the size limit.")
 	}
 	img, err := input.DecodeImage(data, int(limit), maxDimension)
 	if err != nil {

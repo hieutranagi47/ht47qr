@@ -1,6 +1,8 @@
 import { HttpClient, httpResource } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment as env } from '@env/environment';
+import { catchError, from, mergeMap, throwError } from 'rxjs';
+import { parseAPIError } from './shared/model/api-error';
 import { QRCodePayload, QRCodeResponse } from './shared/model/qr-request';
 
 @Injectable({
@@ -44,14 +46,16 @@ export class AppStore {
     if (payload.halftone_image) {
       form.append('halftone_img', payload.halftone_image);
     }
-    return this.httpClient.post<QRCodeResponse>(
-      `${env.apiEndpoint}${env.apiVersion}/generate-qrcode`,
-      form,
-      {
+    return this.httpClient
+      .post(`${env.apiEndpoint}${env.apiVersion}/generate-qrcode`, form, {
         headers: { 'X-Special': 'true' },
-        responseType: 'blob' as 'json',
+        responseType: 'blob',
         observe: 'body',
-      }
-    );
+      })
+      .pipe(
+        catchError((error: unknown) =>
+          from(parseAPIError(error)).pipe(mergeMap((response) => throwError(() => response))),
+        ),
+      );
   }
 }
