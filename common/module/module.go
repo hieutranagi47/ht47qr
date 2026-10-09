@@ -11,8 +11,9 @@ import (
 type Name string
 
 const (
-	QRCode Name = "qrcode"
-	Client Name = "client"
+	QRCode     Name = "qrcode"
+	Client     Name = "client"
+	ShortenURL Name = "shorten_url"
 )
 
 type Module interface {

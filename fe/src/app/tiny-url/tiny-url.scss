@@ -1,0 +1,26 @@
+@use 'bases/rounds' as *;
+@use 'bases/colors' as *;
+
+.text-input {
+  width: 100%;
+  min-width: 0;
+  height: 4rem;
+  padding: 0.5rem;
+  border-radius: $round-4;
+}
+
+.form-error {
+  border-color: $error-color;
+}
+
+.error {
+  color: $error-color;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.result-link {
+  overflow-wrap: anywhere;
+}

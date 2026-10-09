@@ -3,6 +3,7 @@ package htqrcode
 import (
 	"context"
 	"crypto/tls"
+	"database/sql"
 	"errors"
 	"fmt"
 	"net"
@@ -20,6 +21,7 @@ import (
 	"htqrcode/common/module"
 	"htqrcode/common/module/contracts"
 	"htqrcode/qrcode"
+	"htqrcode/shorten_url"
 )
 
 // FileStorage stores files and returns their public URL.
@@ -31,6 +33,8 @@ type FileStorage interface {
 // For production, use real HTTP clients. For tests, inject stubs.
 type ExternalServices struct {
 	FileStorage FileStorage
+	// Database enables SQLite-backed modules. The caller owns its lifetime.
+	Database *sql.DB
 }
 
 type Service struct {
@@ -52,7 +56,11 @@ func New(
 	// then all modules can call each other after initialization completes.
 	moduleContracts := &contracts.Contracts{}
 
-	modules := []module.Module{qrcode.NewModule(), client.NewModule()}
+	modules := []module.Module{qrcode.NewModule()}
+	if services.Database != nil {
+		modules = append(modules, shorten_url.NewModule(services.Database))
+	}
+	modules = append(modules, client.NewModule())
 
 	for _, module := range modules {
 		start := time.Now()

@@ -55,7 +55,7 @@ func main() {
 		panic(err)
 	}
 
-	svc, err := htqrcode.New(ctx, htqrcode.ExternalServices{})
+	svc, err := htqrcode.New(ctx, htqrcode.ExternalServices{Database: db})
 	if err != nil {
 		panic(err)
 	}

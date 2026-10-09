@@ -29,10 +29,17 @@ func MigrateDatabaseUp(
 	}
 	defer db.Close()
 
+	return MigrateSQLiteDatabaseUp(ctx, moduleName, db, fs, migrationsDir)
+}
+
+// MigrateSQLiteDatabaseUp applies module migrations without closing the caller's database.
+func MigrateSQLiteDatabaseUp(ctx context.Context, moduleName string, db *sql.DB, fs fs.FS, migrationsDir string) error {
 	d, err := iofs.New(fs, migrationsDir)
 	if err != nil {
 		return fmt.Errorf("could not create iofs driver: %w", err)
 	}
+
+	defer d.Close()
 
 	migDb, err := sqliteMigrate.WithInstance(db, &sqliteMigrate.Config{
 		DatabaseName:    string(moduleName),
@@ -46,17 +53,6 @@ func MigrateDatabaseUp(
 	if err != nil {
 		return fmt.Errorf("could not create migrate instance: %w", err)
 	}
-
-	// Close the migration source and its dedicated database connection.
-	defer func() {
-		srcErr, dbErr := m.Close()
-		if srcErr != nil {
-			log.FromContext(ctx).With("error", srcErr).Error("closing migration source failed")
-		}
-		if dbErr != nil {
-			log.FromContext(ctx).With("error", dbErr).Error("closing migration database failed")
-		}
-	}()
 
 	finished := make(chan struct{})
 	defer close(finished)

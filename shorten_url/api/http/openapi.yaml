@@ -1,0 +1,149 @@
+openapi: "3.0.3"
+info:
+  title: Shorten URL
+  version: "1.0.0"
+  description: Shorten URL API.
+servers:
+  - url: /
+paths:
+  /shorten-url:
+    post:
+      operationId: createShortenURL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateShortenURLRequest"
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "201":
+          description: Short URL created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateShortenURLResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /r/{short_code}:
+    get:
+      operationId: resolveShortenURL
+      parameters:
+        - name: short_code
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 8
+            maxLength: 8
+            pattern: "^[0-9A-Za-z]{8}$"
+      responses:
+        "307":
+          description: Redirect to the active long URL
+          headers:
+            Location:
+              required: true
+              schema:
+                type: string
+                format: uri-reference
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+components:
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 1
+  schemas:
+    CreateShortenURLRequest:
+      type: object
+      required:
+        - long_url
+      properties:
+        long_url:
+          type: string
+          format: uri
+    CreateShortenURLResponse:
+      type: object
+      required:
+        - short_url
+        - long_url
+        - expires_at
+      properties:
+        short_url:
+          type: string
+        long_url:
+          type: string
+          format: uri
+        expires_at:
+          type: string
+          format: date-time
+    ErrorResponse:
+      type: object
+      required:
+        - message
+        - slug
+        - details
+      properties:
+        message:
+          type: string
+          description: Human-readable error message
+        slug:
+          type: string
+          description: Stable error slug
+        details:
+          type: array
+          description: Detailed error information
+          items:
+            $ref: "#/components/schemas/ErrorDetails"
+    ErrorDetails:
+      type: object
+      required:
+        - entity_type
+        - entity_id
+        - error_slug
+        - message
+      properties:
+        entity_type:
+          type: string
+        entity_id:
+          type: string
+        error_slug:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: User live URL limit reached
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Short URL not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    InternalServerError:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"

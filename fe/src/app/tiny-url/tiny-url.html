@@ -1,1 +1,86 @@
-<p>tiny-url works!</p>
+<h1 class="page-title text-center mt-24">Shorten a URL</h1>
+@if (result(); as link) {
+  <section class="form mx-auto mb-40" aria-labelledby="short-url-heading">
+    <h2 id="short-url-heading" class="mb-24">Your short URL is ready</h2>
+    <div class="d-flex direction-column gap-16 mb-24">
+      <a class="result-link" [href]="link.short_url" target="_blank" rel="noopener noreferrer">{{
+        link.short_url
+      }}</a>
+      <label for="short-url" class="fw-600">Select and copy your short URL:</label>
+      <input
+        #shortUrlInput
+        id="short-url"
+        class="text-input"
+        type="text"
+        readonly
+        [value]="link.short_url"
+        (focus)="shortUrlInput.select()"
+      />
+      <p class="result-link">Original URL: {{ link.long_url }}</p>
+      <p>
+        Expires:
+        <time [attr.datetime]="link.expires_at">{{ link.expires_at | date: 'medium' }}</time>
+      </p>
+    </div>
+    <button type="button" class="btn btn-primary full-width" (click)="createANewOne()">
+      Shorten another URL
+    </button>
+  </section>
+} @else {
+  <form
+    class="form mx-auto mb-40"
+    novalidate
+    (submit)="onSubmit($event)"
+    [attr.aria-busy]="isLoading()"
+  >
+    <fieldset [disabled]="isLoading()">
+      <div class="d-flex direction-column items-start gap-16 mb-24">
+        <label for="long-url" class="fw-600 required">Enter your URL:</label>
+        <input
+          id="long-url"
+          class="text-input"
+          type="url"
+          [formField]="urlForm.long_url"
+          placeholder="https://example.com/your-long-link"
+          autocomplete="url"
+          aria-describedby="url-help url-errors"
+          [class.form-error]="
+            urlForm.long_url().invalid() &&
+            (urlForm.long_url().dirty() || urlForm.long_url().touched())
+          "
+          [attr.aria-invalid]="
+            urlForm.long_url().invalid() &&
+            (urlForm.long_url().dirty() || urlForm.long_url().touched())
+          "
+        />
+        <p id="url-help">Paste a full URL starting with http:// or https://.</p>
+        <div id="url-errors" class="error" aria-live="polite">
+          @if (urlForm.long_url().dirty() || urlForm.long_url().touched()) {
+            @for (validationError of urlForm.long_url().errors(); track $index) {
+              <p>{{ validationError.message }}</p>
+            }
+          }
+        </div>
+      </div>
+      <button
+        type="submit"
+        class="btn btn-primary full-width"
+        [disabled]="isLoading() || urlForm().invalid()"
+      >
+        {{ isLoading() ? 'Shortening...' : 'Shorten URL' }}
+      </button>
+    </fieldset>
+    @if (error(); as response) {
+      <div class="error mt-24" role="alert">
+        <p>{{ response.message }}</p>
+        @if (response.details.length) {
+          <ul>
+            @for (detail of response.details; track $index) {
+              <li>{{ detail.message }}</li>
+            }
+          </ul>
+        }
+      </div>
+    }
+  </form>
+}

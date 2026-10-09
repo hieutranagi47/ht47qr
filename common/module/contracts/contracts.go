@@ -8,10 +8,12 @@ import (
 	"errors"
 
 	qrcode "htqrcode/qrcode/api/module/client"
+	shortenURL "htqrcode/shorten_url/api/module/client"
 )
 
 type Contracts struct {
 	qrcode.QRCode
+	shortenURL.ShortenURL
 }
 
 func (c *Contracts) Verify() error {

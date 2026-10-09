@@ -15,12 +15,15 @@ function isDetail(value: unknown): value is APIErrorDetail {
 }
 
 // PNG requests also deliver JSON error bodies as Blobs.
-export async function parseAPIError(error: unknown): Promise<APIErrorResponse> {
+export async function parseAPIError(
+  error: unknown,
+  fallbackMessage = 'Unable to generate the QR code. Please try again.',
+): Promise<APIErrorResponse> {
   const fallback: APIErrorResponse = {
     message:
       error instanceof HttpErrorResponse && error.status === 0
         ? 'Unable to connect. Please check your connection and try again.'
-        : 'Unable to generate the QR code. Please try again.',
+        : fallbackMessage,
     slug:
       error instanceof HttpErrorResponse && error.status === 0
         ? 'network_error'
