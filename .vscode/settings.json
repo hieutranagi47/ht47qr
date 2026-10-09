@@ -2,13 +2,27 @@
     "cSpell.words": [
         "APIFS",
         "errgroup",
+        "gctrace",
+        "GODEBUG",
+        "godotenv",
+        "GOGC",
+        "GOMAXPROCS",
+        "GOMEMLIMIT",
         "htqrcode",
         "iofs",
         "jackc",
+        "joho",
         "labstack",
+        "madvdontneed",
+        "mattn",
+        "netdns",
         "pgxpool",
         "qrcode",
+        "schedtrace",
+        "sses",
         "stdlib",
-        "UIHTML"
+        "UIHTML",
+        "UNPOOLED",
+        "Vercel"
     ]
 }
