@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { QRCODE_ROUTE } from './shared/constants/app.settings';
+import { QRCODE_ROUTE, TINY_URL_ROUTE } from './shared/constants/app.settings';
 
 export const routes: Routes = [
   {
@@ -7,6 +7,10 @@ export const routes: Routes = [
     loadChildren: () => {
       return import('./qrcode/qrcode.routes').then((r) => r.routes);
     },
+  },
+  {
+    path: `${TINY_URL_ROUTE}`,
+    loadComponent: () => import('./tiny-url/tiny-url').then((c) => c.TinyUrl),
   },
   {
     path: 'interview',

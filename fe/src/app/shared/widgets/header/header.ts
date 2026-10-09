@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { QRCODE_ROUTE } from '@app/shared/constants/app.settings';
+import { QRCODE_ROUTE, TINY_URL_ROUTE } from '@app/shared/constants/app.settings';
 
 @Component({
   imports: [RouterLink, RouterLinkActive],
@@ -10,4 +10,5 @@ import { QRCODE_ROUTE } from '@app/shared/constants/app.settings';
 })
 export class Header {
   readonly qrCodeRoute = QRCODE_ROUTE;
+  readonly tinyUrlRoute = TINY_URL_ROUTE;
 }

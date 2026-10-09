@@ -80,12 +80,22 @@ for (const componentType of [
       expect(generate).toHaveBeenCalledTimes(1);
       expect(component.isLoading()).toBe(true);
       fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBe(true);
+      const submitButton: HTMLButtonElement = fixture.nativeElement.querySelector('button[type="submit"]');
+      const form: HTMLFormElement = fixture.nativeElement.querySelector('form');
+      const controls = Array.from(form.querySelectorAll('input, textarea, button'));
+      expect(submitButton.disabled).toBe(true);
+      expect(submitButton.textContent).toBe('Generating...');
+      expect(form.getAttribute('aria-busy')).toBe('true');
+      expect(controls.length).toBeGreaterThan(0);
+      expect(controls.every((control) => control.matches(':disabled'))).toBe(true);
       component.onSubmit(new Event('submit'));
       expect(generate).toHaveBeenCalledTimes(1);
       request.error(validationError);
       fixture.detectChanges();
       expect(component.isLoading()).toBe(false);
+      expect(submitButton.textContent).toBe('Generate QR Code');
+      expect(form.getAttribute('aria-busy')).toBe('false');
+      expect(form.querySelectorAll('input:disabled, textarea:disabled').length).toBe(0);
       expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain(
         validationError.details[0].message,
       );
@@ -94,7 +104,10 @@ for (const componentType of [
       expect(component.error()).toBeNull();
       expect(generate).toHaveBeenCalledTimes(2);
       request.complete();
+      fixture.detectChanges();
       expect(component.isLoading()).toBe(false);
+      expect(submitButton.textContent).toBe('Generate QR Code');
+      expect(form.querySelectorAll('input:disabled, textarea:disabled').length).toBe(0);
     });
   });
 }

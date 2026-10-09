@@ -1,87 +1,85 @@
 {
-  "hash": "8e24e0fe",
-  "configHash": "199bced7",
+  "hash": "13044132",
+  "configHash": "6d01330a",
   "lockfileHash": "a8099071",
-  "browserHash": "b8e1bdfb",
+  "browserHash": "86d7c76c",
   "optimized": {
     "@angular/common": {
       "src": "../../../../../../node_modules/.pnpm/@angular+common@22.2.1_@angular+core@22.2.1_@angular+compiler@22.2.1_rxjs@7.8.2__rxjs@7.8.2/node_modules/@angular/common/fesm2022/common.mjs",
       "file": "@angular_common.js",
-      "fileHash": "2e25cabf",
+      "fileHash": "232f18d7",
       "needsInterop": false
     },
     "@angular/common/http": {
       "src": "../../../../../../node_modules/.pnpm/@angular+common@22.2.1_@angular+core@22.2.1_@angular+compiler@22.2.1_rxjs@7.8.2__rxjs@7.8.2/node_modules/@angular/common/fesm2022/http.mjs",
       "file": "@angular_common_http.js",
-      "fileHash": "b2caafa8",
+      "fileHash": "ab63f55f",
       "needsInterop": false
     },
     "@angular/core": {
       "src": "../../../../../../node_modules/.pnpm/@angular+core@22.2.1_@angular+compiler@22.2.1_rxjs@7.8.2/node_modules/@angular/core/fesm2022/core.mjs",
       "file": "@angular_core.js",
-      "fileHash": "c1ef38b2",
+      "fileHash": "43a0db21",
       "needsInterop": false
     },
     "@angular/forms/signals": {
       "src": "../../../../../../node_modules/.pnpm/@angular+forms@22.2.1_@angular+common@22.2.1_@angular+core@22.2.1_@angular+compiler@22._e8c1505b8dc391b4b50e1213995d3be5/node_modules/@angular/forms/fesm2022/signals.mjs",
       "file": "@angular_forms_signals.js",
-      "fileHash": "a84392ae",
+      "fileHash": "efbd098b",
       "needsInterop": false
     },
     "@angular/platform-browser": {
       "src": "../../../../../../node_modules/.pnpm/@angular+platform-browser@22.2.1_@angular+common@22.2.1_@angular+core@22.2.1_@angular+c_29fc8fb89ccf5cf9f7fde60b3e6d1c3e/node_modules/@angular/platform-browser/fesm2022/platform-browser.mjs",
       "file": "@angular_platform-browser.js",
-      "fileHash": "965d96c3",
+      "fileHash": "3c1b3525",
       "needsInterop": false
     },
     "@angular/router": {
       "src": "../../../../../../node_modules/.pnpm/@angular+router@22.2.1_@angular+common@22.2.1_@angular+core@22.2.1_@angular+compiler@22_3ba865bf5b5552c0034bbae05c7f6d7d/node_modules/@angular/router/fesm2022/router.mjs",
       "file": "@angular_router.js",
-      "fileHash": "76a0c0eb",
+      "fileHash": "433cc9a5",
       "needsInterop": false
     },
     "ngx-color/sketch": {
       "src": "../../../../../../node_modules/.pnpm/ngx-color@10.1.0_@angular+common@22.2.1_@angular+core@22.2.1_@angular+compiler@22.2.1_r_95d8a4f570d71c262f40cd31b73037e1/node_modules/ngx-color/fesm2022/ngx-color-sketch.mjs",
       "file": "ngx-color_sketch.js",
-      "fileHash": "cfdf35e7",
+      "fileHash": "067bb62a",
+      "needsInterop": false
+    },
+    "rxjs": {
+      "src": "../../../../../../node_modules/.pnpm/rxjs@7.8.2/node_modules/rxjs/dist/esm5/index.js",
+      "file": "rxjs.js",
+      "fileHash": "13e86e80",
       "needsInterop": false
     }
   },
   "chunks": {
-    "_xhr-chunk-abOx5Vmm": {
-      "file": "_xhr-chunk-abOx5Vmm.js",
+    "_xhr-chunk-itZdH8Pg": {
+      "file": "_xhr-chunk-itZdH8Pg.js",
       "isDynamicEntry": false
     },
-    "common-C9_Wf7H1": {
-      "file": "common-C9_Wf7H1.js",
+    "common-hr5BUuwv": {
+      "file": "common-hr5BUuwv.js",
       "isDynamicEntry": false
     },
-    "core-CRIuhHMq": {
-      "file": "core-CRIuhHMq.js",
+    "core-DlLcHw3d": {
+      "file": "core-DlLcHw3d.js",
       "isDynamicEntry": false
     },
-    "createObject-05Me1ysv": {
-      "file": "createObject-05Me1ysv.js",
+    "esm5-Dur3xngx": {
+      "file": "esm5-Dur3xngx.js",
       "isDynamicEntry": false
     },
-    "forms-CwigEQVL": {
-      "file": "forms-CwigEQVL.js",
+    "forms-CuyV6MnS": {
+      "file": "forms-CuyV6MnS.js",
       "isDynamicEntry": false
     },
-    "http-I8CjUgFn": {
-      "file": "http-I8CjUgFn.js",
+    "http-B3kBH2l8": {
+      "file": "http-B3kBH2l8.js",
       "isDynamicEntry": false
     },
-    "mergeMap-BHgXUGMb": {
-      "file": "mergeMap-BHgXUGMb.js",
-      "isDynamicEntry": false
-    },
-    "platform-browser-DipNc0QP": {
-      "file": "platform-browser-DipNc0QP.js",
-      "isDynamicEntry": false
-    },
-    "tap-D2vKwvTe": {
-      "file": "tap-D2vKwvTe.js",
+    "platform-browser-DxNQhbKS": {
+      "file": "platform-browser-DxNQhbKS.js",
       "isDynamicEntry": false
     }
   }

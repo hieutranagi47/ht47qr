@@ -5,6 +5,17 @@
 .form {
   width: min(64rem, 100%);
   padding: $gap-24;
+
+  > fieldset {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+
+    &:disabled {
+      pointer-events: none;
+    }
+  }
 }
 
 .non-resizable {
