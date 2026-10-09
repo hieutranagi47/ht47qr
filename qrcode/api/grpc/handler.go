@@ -19,8 +19,10 @@ type Handler struct {
 	Generator app.Generator
 }
 
-var _ QRCodeServiceServer = Handler{}
-var hexColor = regexp.MustCompile(`^#?[0-9a-fA-F]{6}$`)
+var (
+	_        QRCodeServiceServer = Handler{}
+	hexColor                     = regexp.MustCompile(`^#?[0-9a-fA-F]{6}$`)
+)
 
 func Register(s *transport.Server, generator app.Generator) {
 	RegisterQRCodeServiceServer(s, Handler{Generator: generator})

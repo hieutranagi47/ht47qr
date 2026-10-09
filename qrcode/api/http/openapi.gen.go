@@ -86,14 +86,14 @@ type PostV1GenerateQrCodeMultipartRequestBody PostV1GenerateQrCodeMultipartBody
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// PostV1GenerateQrCode Generate QR code from form data
-	// (POST /api/v1/generate-qrcode)
+	// (POST /generate-qrcode)
 	PostV1GenerateQrCode(ctx *echo.Context) error
-	// GetV1VeryFirstApi Sample hello API
-	// (GET /api/v1/very-first-api)
-	GetV1VeryFirstApi(ctx *echo.Context) error
 	// GetHealth Health check
 	// (GET /health)
 	GetHealth(ctx *echo.Context) error
+	// GetV1VeryFirstApi Sample hello API
+	// (GET /very-first-api)
+	GetV1VeryFirstApi(ctx *echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -110,21 +110,21 @@ func (w *ServerInterfaceWrapper) PostV1GenerateQrCode(ctx *echo.Context) error {
 	return err
 }
 
-// GetV1VeryFirstApi converts echo context to params.
-func (w *ServerInterfaceWrapper) GetV1VeryFirstApi(ctx *echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetV1VeryFirstApi(ctx)
-	return err
-}
-
 // GetHealth converts echo context to params.
 func (w *ServerInterfaceWrapper) GetHealth(ctx *echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetHealth(ctx)
+	return err
+}
+
+// GetV1VeryFirstApi converts echo context to params.
+func (w *ServerInterfaceWrapper) GetV1VeryFirstApi(ctx *echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetV1VeryFirstApi(ctx)
 	return err
 }
 
@@ -176,8 +176,8 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options 
 	}
 
 	router.GET(options.BaseURL+"/health", wrapper.GetHealth, options.OperationMiddlewares["getHealth"]...)
-	router.GET(options.BaseURL+"/api/v1/very-first-api", wrapper.GetV1VeryFirstApi, options.OperationMiddlewares["getV1VeryFirstApi"]...)
-	router.POST(options.BaseURL+"/api/v1/generate-qrcode", wrapper.PostV1GenerateQrCode, options.OperationMiddlewares["postV1GenerateQrCode"]...)
+	router.GET(options.BaseURL+"/very-first-api", wrapper.GetV1VeryFirstApi, options.OperationMiddlewares["getV1VeryFirstApi"]...)
+	router.POST(options.BaseURL+"/generate-qrcode", wrapper.PostV1GenerateQrCode, options.OperationMiddlewares["postV1GenerateQrCode"]...)
 
 }
 
@@ -254,41 +254,6 @@ func (response PostV1GenerateQrCodedefaultJSONResponse) VisitPostV1GenerateQrCod
 	return err
 }
 
-type GetV1VeryFirstApiRequestObject struct {
-}
-
-type GetV1VeryFirstApiResponseObject interface {
-	VisitGetV1VeryFirstApiResponse(w http.ResponseWriter) error
-}
-
-type GetV1VeryFirstApi200TextResponse string
-
-func (response GetV1VeryFirstApi200TextResponse) VisitGetV1VeryFirstApiResponse(w http.ResponseWriter) error {
-
-	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(200)
-
-	_, err := w.Write([]byte(fmt.Sprint(response)))
-	return err
-}
-
-type GetV1VeryFirstApidefaultJSONResponse struct {
-	Body       ErrorResponse
-	StatusCode int
-}
-
-func (response GetV1VeryFirstApidefaultJSONResponse) VisitGetV1VeryFirstApiResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(response.StatusCode)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
 type GetHealthRequestObject struct {
 }
 
@@ -324,17 +289,52 @@ func (response GetHealthdefaultJSONResponse) VisitGetHealthResponse(w http.Respo
 	return err
 }
 
+type GetV1VeryFirstApiRequestObject struct {
+}
+
+type GetV1VeryFirstApiResponseObject interface {
+	VisitGetV1VeryFirstApiResponse(w http.ResponseWriter) error
+}
+
+type GetV1VeryFirstApi200TextResponse string
+
+func (response GetV1VeryFirstApi200TextResponse) VisitGetV1VeryFirstApiResponse(w http.ResponseWriter) error {
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(200)
+
+	_, err := w.Write([]byte(fmt.Sprint(response)))
+	return err
+}
+
+type GetV1VeryFirstApidefaultJSONResponse struct {
+	Body       ErrorResponse
+	StatusCode int
+}
+
+func (response GetV1VeryFirstApidefaultJSONResponse) VisitGetV1VeryFirstApiResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// PostV1GenerateQrCode Generate QR code from form data
-	// (POST /api/v1/generate-qrcode)
+	// (POST /generate-qrcode)
 	PostV1GenerateQrCode(ctx context.Context, request PostV1GenerateQrCodeRequestObject) (PostV1GenerateQrCodeResponseObject, error)
-	// GetV1VeryFirstApi Sample hello API
-	// (GET /api/v1/very-first-api)
-	GetV1VeryFirstApi(ctx context.Context, request GetV1VeryFirstApiRequestObject) (GetV1VeryFirstApiResponseObject, error)
 	// GetHealth Health check
 	// (GET /health)
 	GetHealth(ctx context.Context, request GetHealthRequestObject) (GetHealthResponseObject, error)
+	// GetV1VeryFirstApi Sample hello API
+	// (GET /very-first-api)
+	GetV1VeryFirstApi(ctx context.Context, request GetV1VeryFirstApiRequestObject) (GetV1VeryFirstApiResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx *echo.Context, request any) (any, error)
@@ -378,29 +378,6 @@ func (sh *strictHandler) PostV1GenerateQrCode(ctx *echo.Context) error {
 	return nil
 }
 
-// GetV1VeryFirstApi operation middleware
-func (sh *strictHandler) GetV1VeryFirstApi(ctx *echo.Context) error {
-	var request GetV1VeryFirstApiRequestObject
-
-	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.GetV1VeryFirstApi(ctx.Request().Context(), request.(GetV1VeryFirstApiRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "GetV1VeryFirstApi")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		return err
-	} else if validResponse, ok := response.(GetV1VeryFirstApiResponseObject); ok {
-		return validResponse.VisitGetV1VeryFirstApiResponse(ctx.Response())
-	} else if response != nil {
-		return fmt.Errorf("unexpected response type: %T", response)
-	}
-	return nil
-}
-
 // GetHealth operation middleware
 func (sh *strictHandler) GetHealth(ctx *echo.Context) error {
 	var request GetHealthRequestObject
@@ -418,6 +395,29 @@ func (sh *strictHandler) GetHealth(ctx *echo.Context) error {
 		return err
 	} else if validResponse, ok := response.(GetHealthResponseObject); ok {
 		return validResponse.VisitGetHealthResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// GetV1VeryFirstApi operation middleware
+func (sh *strictHandler) GetV1VeryFirstApi(ctx *echo.Context) error {
+	var request GetV1VeryFirstApiRequestObject
+
+	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetV1VeryFirstApi(ctx.Request().Context(), request.(GetV1VeryFirstApiRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetV1VeryFirstApi")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(GetV1VeryFirstApiResponseObject); ok {
+		return validResponse.VisitGetV1VeryFirstApiResponse(ctx.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}

@@ -4,7 +4,9 @@ import (
 	"context"
 	"embed"
 	"io/fs"
+	"net/http"
 	"path"
+	"strings"
 
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
@@ -42,7 +44,7 @@ func (*Module) RegisterHttp(_ context.Context, router common.EchoRouter) error {
 	csp := middleware.SecureWithConfig(middleware.SecureConfig{
 		ContentSecurityPolicy: contentSecurityPolicy,
 	})
-	return fs.WalkDir(staticFiles, ".", func(name string, entry fs.DirEntry, err error) error {
+	err := fs.WalkDir(staticFiles, ".", func(name string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -62,6 +64,26 @@ func (*Module) RegisterHttp(_ context.Context, router common.EchoRouter) error {
 		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	index := csp(echo.StaticFileHandler("index.html", staticFiles))
+	fallback := func(c *echo.Context) error {
+		// The wildcard is relative to the router, including when mounted in a group.
+		requestPath := "/" + c.Param("*")
+		if requestPath == "/api" || strings.HasPrefix(requestPath, "/api/") ||
+			requestPath == "/assets" || strings.HasPrefix(requestPath, "/assets/") ||
+			requestPath == "/media" || strings.HasPrefix(requestPath, "/media/") ||
+			path.Ext(requestPath) != "" {
+			return echo.NewHTTPError(http.StatusNotFound, http.StatusText(http.StatusNotFound))
+		}
+		// Serve the app shell without redirecting or changing the browser's URL.
+		return index(c)
+	}
+	router.GET("/*", fallback)
+	router.HEAD("/*", fallback)
+	return nil
 }
 
 func (*Module) RegisterSSE(context.Context, common.EchoRouter) error { return nil }

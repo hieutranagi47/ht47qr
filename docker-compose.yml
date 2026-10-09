@@ -6,17 +6,17 @@ services:
       no_cache: true
     environment:
       # Giới hạn Concurrency (Xử lý đồng thời) và CPU
-      - GOMAXPROCS=2 # Mặc định, Go sẽ lấy số CPU của máy Host làm giá trị GOMAXPROCS. Nếu bạn chạy container trên một server 64 cores nhưng chỉ giới hạn tài nguyên container là cpus: 2, Go (từ phiên bản 1.24 trở về trước) vẫn có thể hiểu nhầm là có 64 cores, dẫn đến việc tranh chấp CPU và giảm hiệu năng (CPU throttling).
-      - GODEBUG=madvdontneed=1,netdns=go,gctrace=1,schedtrace=1000 # =In ra trạng thái của bộ lập lịch (Scheduler) sau mỗi X mili-giây, giúp bạn xem các Goroutine trong Echo đang phân bổ trên các luồng CPU như thế nào để debug hiện tượng nghẽn.
-      - GOMEMLIMIT=900MiB # ~ 90% of the RAM. Đặt giới hạn mềm cho tổng lượng bộ nhớ mà Go Runtime được phép dùng. Khi bộ nhớ chạm ngưỡng này, bộ thu gom rác (Garbage Collector - GC) sẽ bị kích hoạt liên tục và quyết liệt hơn để giải phóng RAM, cố gắng không để container vượt quá giới hạn và bị Docker Kill.
-      - GOGC=90 # Xác định tỷ lệ phần trăm tăng trưởng của bộ nhớ heap trước khi đợt thu gom rác tiếp theo được kích hoạt (mặc định là 100).
-      - TZ=Asia/Ho_Chi_Minh
-      - SERVER_PORT="8888"
-      - SERVER_PORT_TLS="8443"
-      - SERVER_SSE_PORT="8886"
-      - SERVER_SSE_PORT_TLS="8446"
+      GOMAXPROCS: "2" # Mặc định, Go sẽ lấy số CPU của máy Host làm giá trị GOMAXPROCS. Nếu bạn chạy container trên một server 64 cores nhưng chỉ giới hạn tài nguyên container là cpus: 2, Go (từ phiên bản 1.24 trở về trước) vẫn có thể hiểu nhầm là có 64 cores, dẫn đến việc tranh chấp CPU và giảm hiệu năng (CPU throttling).
+      GODEBUG: "madvdontneed=1,netdns=go,gctrace=1,schedtrace=1000" # =In ra trạng thái của bộ lập lịch (Scheduler) sau mỗi X mili-giây, giúp bạn xem các Goroutine trong Echo đang phân bổ trên các luồng CPU như thế nào để debug hiện tượng nghẽn.
+      GOMEMLIMIT: "900MiB" # ~ 90% of the RAM. Đặt giới hạn mềm cho tổng lượng bộ nhớ mà Go Runtime được phép dùng. Khi bộ nhớ chạm ngưỡng này, bộ thu gom rác (Garbage Collector - GC) sẽ bị kích hoạt liên tục và quyết liệt hơn để giải phóng RAM, cố gắng không để container vượt quá giới hạn và bị Docker Kill.
+      GOGC: "90" # Xác định tỷ lệ phần trăm tăng trưởng của bộ nhớ heap trước khi đợt thu gom rác tiếp theo được kích hoạt (mặc định là 100).
+      TZ: Asia/Ho_Chi_Minh
+      SERVER_PORT: "8888"
+      SERVER_PORT_TLS: "8443"
+      SERVER_SSE_PORT: "8886"
+      SERVER_SSE_PORT_TLS: "8446"
       # Local development TLS credentials (PEM content).
-      - TLS_CERT= |
+      TLS_CERT: |
         -----BEGIN CERTIFICATE-----
         MIIEVjCCAr6gAwIBAgIQBLHLN215TlB91k7qD1nqxTANBgkqhkiG9w0BAQsFADCB
         hTEeMBwGA1UEChMVbWtjZXJ0IGRldmVsb3BtZW50IENBMS0wKwYDVQQLDCRoaWV1
@@ -43,7 +43,7 @@ services:
         TdgviMmi6MfGBFb1sU1nnvg91+xxkRUMhw6E78RXk616PmsndeVKqBGingjsxMZt
         J4e232r9YihAfw==
         -----END CERTIFICATE-----
-      - TLS_KEY= |
+      TLS_KEY: |
         -----BEGIN PRIVATE KEY-----
         MIIEwAIBADANBgkqhkiG9w0BAQEFAASCBKowggSmAgEAAoIBAQC71qwGV8hj0XRS
         xqZuTecNMmHcOPRSoC2bBzPk30HevIgoX3Wq1TysbrEOudhC1N8irmYL7clkBUPt

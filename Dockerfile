@@ -17,7 +17,13 @@ RUN pnpm run build --configuration production
 # Build the Go server with the generated frontend assets.
 FROM golang:1.27.1-alpine AS builder
 
-RUN apk add --no-cache ca-certificates gcc libc-dev musl-dev
+RUN apk add --no-cache ca-certificates gcc libc-dev musl-dev protobuf
+
+# Install the tools required by task gen (OpenAPI, protobuf, and formatting).
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go install github.com/go-task/task/v3/cmd/task@v3.53.1 \
+    && go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.12 \
+    && go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
 
 WORKDIR /app
 
@@ -26,6 +32,7 @@ RUN --mount=type=cache,target=/go/pkg/mod go mod download
 
 COPY . ./
 COPY --from=frontend /app/client/api/ ./client/api/
+RUN --mount=type=cache,target=/go/pkg/mod task gen
 
 RUN CGO_ENABLED=1 go build -tags musl -trimpath -o /out/htqrcode ./cmd
 

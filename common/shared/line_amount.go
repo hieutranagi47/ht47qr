@@ -5,32 +5,32 @@ import (
 )
 
 type LineAmount struct {
-  amount  decimal.Decimal
-  isGross bool
+	amount  decimal.Decimal
+	isGross bool
 }
 
 func (l LineAmount) Amount() decimal.Decimal {
-  return l.amount
+	return l.amount
 }
 
 func (l LineAmount) IsNet() bool {
-  return !l.isGross
+	return !l.isGross
 }
 
 func (l LineAmount) IsGross() bool {
-  return l.isGross
+	return l.isGross
 }
 
 func NewNetAmount(amount decimal.Decimal) LineAmount {
-  return LineAmount{
-    amount:  amount,
-    isGross: false,
-  }
+	return LineAmount{
+		amount:  amount,
+		isGross: false,
+	}
 }
 
 func NewGrossAmount(amount decimal.Decimal) LineAmount {
-  return LineAmount{
-    amount:  amount,
-    isGross: true,
-  }
+	return LineAmount{
+		amount:  amount,
+		isGross: true,
+	}
 }

@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  apiEndpoint: 'https://localhost:8334/qrcode/api/',
+  apiEndpoint: 'https://localhost:8443/api/qrcode/',
   apiVersion: 'v1',
   envName: 'local',
   host: 'http://localhost:4200',

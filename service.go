@@ -112,6 +112,9 @@ func (s *Service) Run(ctx context.Context, httpPort, httpsPort, ssePort, ssesPor
 	if len(cert) == 0 || len(key) == 0 {
 		return fmt.Errorf("TLS_CERT and TLS_KEY must contain PEM-encoded certificate and private key")
 	}
+	if _, err := tls.X509KeyPair(cert, key); err != nil {
+		return fmt.Errorf("loading TLS_CERT/TLS_KEY (expected PEM content with real newlines, not file paths or literal \\n): %w", err)
+	}
 	for _, port := range []string{httpPort, httpsPort, ssePort, ssesPort} {
 		if port == "" {
 			return fmt.Errorf("HTTP, HTTPS, SSE and SSE TLS ports must be configured")

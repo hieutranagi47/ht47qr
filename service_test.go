@@ -5,11 +5,14 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/pem"
 	"errors"
 	"io"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -22,6 +25,38 @@ import (
 	commonHTTP "htqrcode/common/http"
 	qrcodeSSE "htqrcode/qrcode/api/sse"
 )
+
+func TestServiceRunRejectsInvalidTLSBeforeStartingListeners(t *testing.T) {
+	server := httptest.NewTLSServer(http.NotFoundHandler())
+	server.Close()
+	pair := server.TLS.Certificates[0]
+	cert := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: pair.Certificate[0]})
+	keyDER, err := x509.MarshalPKCS8PrivateKey(pair.PrivateKey)
+	require.NoError(t, err)
+	key := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: keyDER})
+
+	for _, test := range []struct {
+		name string
+		cert string
+		key  string
+	}{
+		{name: "missing", cert: "", key: ""},
+		{name: "file paths", cert: "external/cert/localhost+1.pem", key: "external/cert/localhost+1-key.pem"},
+		{name: "escaped newlines", cert: strings.ReplaceAll(string(cert), "\n", `\n`), key: string(key)},
+		{name: "folded newlines", cert: strings.ReplaceAll(string(cert), "\n", " "), key: string(key)},
+		{name: "invalid key", cert: string(cert), key: "invalid"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Setenv("TLS_CERT", test.cert)
+			t.Setenv("TLS_KEY", test.key)
+			// No routers are initialized: invalid TLS must fail before listeners start.
+			var service Service
+			err := service.Run(context.Background(), "0", "0", "0", "0")
+			require.ErrorContains(t, err, "TLS_CERT")
+			require.ErrorContains(t, err, "TLS_KEY")
+		})
+	}
+}
 
 func TestServiceRunReportsListenerFailure(t *testing.T) {
 	cert, err := os.ReadFile("external/cert/localhost+1.pem")
