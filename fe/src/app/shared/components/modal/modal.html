@@ -1,0 +1,6 @@
+<dialog #dialog class="center-dialog gap-24" [attr.aria-label]="ariaLabel()">
+  <ng-content />
+</dialog>
+<span class="modal-trigger" (click)="openModal()">
+  <ng-content select="[trigger-btn]" />
+</span>

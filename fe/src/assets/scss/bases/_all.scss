@@ -15,6 +15,7 @@
 @use './utils/overflows' as *;
 @use './utils/displays' as *;
 @use './utils/glowing' as *;
+@use './utils/dialog' as *;
 
 @use './../atoms/button/index' as *;
 @use './../atoms/input/index' as *;

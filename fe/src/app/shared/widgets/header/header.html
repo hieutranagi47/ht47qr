@@ -1,5 +1,5 @@
 <header class="header">
-  <div class="container header-container d-flex items-center justify-between">
+  <div class="container d-flex items-center justify-between">
     <a routerLink="/" class="logo d-flex items-center gap-12 fw-800 fs-24 lh-80">
       <img src="/images/logo.jpg" height="40" width="40" alt="The website logo on the main header bar" />
       <span class="logo-text">QR Code<br />Generator</span>
@@ -7,43 +7,7 @@
     <nav class="menu-container" role="main navigation">
       <ul class="menu-list reset-ul d-flex gap-16" role="menubar" aria-label="Main menu">
         <li class="menu-item relative" routerLinkActive="active">
-          <a class="d-inline-block fw-600" routerLink="/text" role="menuitem">Text</a>
-          <span class="underline absolute"></span>
-        </li>
-        <li class="menu-item relative" routerLinkActive="active">
-          <a class="d-inline-block fw-600" routerLink="/sms" role="menuitem">SMS</a>
-          <span class="underline absolute"></span>
-        </li>
-        <li class="menu-item relative" routerLinkActive="active">
-          <a class="d-inline-block fw-600" routerLink="/tel" role="menuitem">Tel</a>
-          <span class="underline absolute"></span>
-        </li>
-        <li class="menu-item relative" routerLinkActive="active">
-          <a class="d-inline-block fw-600" routerLink="/contact" role="menuitem">Contact</a>
-          <span class="underline absolute"></span>
-        </li>
-        <li class="menu-item relative" routerLinkActive="active">
-          <a class="d-inline-block fw-600" routerLink="/biz-card" role="menuitem">Biz Card</a>
-          <span class="underline absolute"></span>
-        </li>
-        <li class="menu-item relative" routerLinkActive="active">
-          <a class="d-inline-block fw-600" routerLink="/geo" role="menuitem">Geo</a>
-          <span class="underline absolute"></span>
-        </li>
-        <li class="menu-item relative" routerLinkActive="active">
-          <a class="d-inline-block fw-600" routerLink="/email" role="menuitem">e-Mail</a>
-          <span class="underline absolute"></span>
-        </li>
-        <!-- <li class="menu-item relative" routerLinkActive="active">
-          <a class="d-inline-block fw-600" routerLink="/email-to" role="menuitem">e-Mail To</a>
-          <span class="underline absolute"></span>
-        </li> -->
-        <li class="menu-item relative" routerLinkActive="active">
-          <a class="d-inline-block fw-600" routerLink="/i-cal" role="menuitem">iCal</a>
-          <span class="underline absolute"></span>
-        </li>
-        <li class="menu-item relative" routerLinkActive="active">
-          <a class="d-inline-block fw-600" routerLink="/calendar" role="menuitem">Calendar</a>
+          <a class="d-inline-block fw-600" [routerLink]="['/', qrCodeRoute]" role="menuitem">QR Code Generator</a>
           <span class="underline absolute"></span>
         </li>
       </ul>

@@ -1,0 +1,49 @@
+<header>
+    <nav class="menu-container" role="navigation">
+      <ul class="menu-list reset-ul d-flex gap-16" role="menubar" aria-label="Main menu">
+        <li class="menu-item relative" routerLinkActive="active">
+          <a class="d-inline-block fw-600" [routerLink]="['/', qrCodeRoute,'text']" role="menuitem">Text</a>
+          <span class="underline absolute"></span>
+        </li>
+        <li class="menu-item relative" routerLinkActive="active">
+          <a class="d-inline-block fw-600" [routerLink]="['/', qrCodeRoute, 'sms']" role="menuitem">SMS</a>
+          <span class="underline absolute"></span>
+        </li>
+        <li class="menu-item relative" routerLinkActive="active">
+          <a class="d-inline-block fw-600" [routerLink]="['/', qrCodeRoute, 'tel']" role="menuitem">Tel</a>
+          <span class="underline absolute"></span>
+        </li>
+        <li class="menu-item relative" routerLinkActive="active">
+          <a class="d-inline-block fw-600" [routerLink]="['/', qrCodeRoute,'contact']" role="menuitem">Contact</a>
+          <span class="underline absolute"></span>
+        </li>
+        <li class="menu-item relative" routerLinkActive="active">
+          <a class="d-inline-block fw-600" [routerLink]="['/', qrCodeRoute, 'biz-card']" role="menuitem">Biz Card</a>
+          <span class="underline absolute"></span>
+        </li>
+        <li class="menu-item relative" routerLinkActive="active">
+          <a class="d-inline-block fw-600" [routerLink]="['/', qrCodeRoute, 'geo']" role="menuitem">Geo</a>
+          <span class="underline absolute"></span>
+        </li>
+        <li class="menu-item relative" routerLinkActive="active">
+          <a class="d-inline-block fw-600" [routerLink]="['/', qrCodeRoute, 'email']" role="menuitem">e-Mail</a>
+          <span class="underline absolute"></span>
+        </li>
+        <!-- <li class="menu-item relative" routerLinkActive="active">
+          <a class="d-inline-block fw-600" [routerLink]="['/', ' qrCodeRoute,email']-to" role="menuitem">e-Mail To</a>
+          <span class="underline absolute"></span>
+        </li> -->
+        <li class="menu-item relative" routerLinkActive="active">
+          <a class="d-inline-block fw-600" [routerLink]="['/ qrCodeRoute,', 'i-cal']" role="menuitem">iCal</a>
+          <span class="underline absolute"></span>
+        </li>
+        <li class="menu-item relative" routerLinkActive="active">
+          <a class="d-inline-block fw-600" [routerLink]="['/', qrCodeRoute, 'calendar']" role="menuitem">Calendar</a>
+          <span class="underline absolute"></span>
+        </li>
+      </ul>
+    </nav>
+</header>
+<section class="content">
+    <router-outlet />
+</section>

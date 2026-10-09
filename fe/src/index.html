@@ -5,7 +5,100 @@
     <title>QRCode</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
+
+    <!-- BEGIN: PRELOAD -->
+    <link rel="preload" href="images/double-ring.gif" as="image" type="image/gif" />
+    <link rel="preload" href="favicon.ico" as="image" type="image/x-icon" />
+    <!-- <link rel="preload"
+        href="fonts/Inconsolata/Inconsolata.ttf"
+        as="font" /> -->
+    <!-- END: PRELOAD -->
+
+    <!-- Meta for PWA -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#6a0dad" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="connect-src 'self'; font-src 'self'; frame-src 'self'; img-src 'self'; manifest-src 'self'; media-src 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' ; script-src-elem 'self' 'unsafe-eval' 'unsafe-inline' ; style-src 'self' 'unsafe-inline' 'unsafe-hashes'; worker-src 'self'; child-src 'none'; base-uri 'self';"
+    />
+    <!--This meta will set color for status bar on android-->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hieu Tran Profile" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!--default | black | black-translucent-->
+
+    <!-- METADATA FOR SOCIAL SHARE -->
+    <meta property="og:site_name" content="Hieu Tran" />
+    <meta property="og:title" content="Hieu Tran portal" />
+    <meta
+      property="og:description"
+      content="Experience with Head of Development, Front-end teachnical leader, Front-end architecture, Team management, and Project management. Good at Communication Skills"
+    />
+    <meta
+      name="description"
+      content="Experience with Head of Development, Front-end teachnical leader, Front-end architecture, Team management, and Project management. Good at Communication Skills"
+    />
+    <meta
+      property="og:keywords"
+      content="Front-end developer, Angular, ReactJS/Next, Vue/Nuxt, SolidJS/SolidStart, AngularJS, HTML5, CSS3, SCSS, LESS, SASS, Boostrap 5, AntDesign, Python - FastApi, Falcon, Flask, PHP - Zend 2 framework, Go (Golang) - Gin, Mongo DB, MySQL, MS SQL, Rest API, (g)PRC, GraphQL, MicroService, Micro Front-end, Design System, Storybook, Atomic Design"
+    />
+    <meta property="og:image" content="https://ht47.vercel.app/assets/imgs/cli.jpg" />
+    <meta property="og:image:secure_url" content="https://ht47.vercel.app/assets/imgs/cli.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:url" content="https://ht47.vercel.app" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image:alt" content="Hieu Tran" />
+    <meta property="og:image:width" content="800" />
+    <meta property="og:image:height" content="600" />
+
+    <!-- TWITTER -->
+    <!-- <meta name="twitter:card" content="summary" /> -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@hieutranagi47 & @jerrybk108" />
+    <meta name="twitter:creator" content="@hieutranagi47 & @jerrybk108" />
+    <meta name="twitter:title" content="Hieu Tran portal" />
+    <meta
+      name="twitter:description"
+      content="Experience with Head of Development, Front-end teachnical leader, Front-end architecture, Team management, and Project management. Good at Communication Skills."
+    />
+    <meta
+      name="twitter:keywords"
+      content="Front-end developer, Angular, ReactJS/Next, Vue/Nuxt, SolidJS/SolidStart, AngularJS, HTML5, CSS3, SCSS, LESS, SASS, Boostrap 5, AntDesign, Python - FastApi, Falcon, Flask, PHP - Zend 2 framework, Go (Golang) - Gin, Mongo DB, MySQL, MS SQL, Rest API, (g)PRC, GraphQL, MicroService, Micro Front-end, Design System, Storybook, Atomic Design"
+    />
+    <meta name="twitter:image" content="https://ht47.vercel.app/assets/imgs/cli.jpg" />
+    <meta name="twitter:image:src" content="https://ht47.vercel.app/assets/imgs/cli.jpg" />
+    <meta name="twitter:image:alt" content="Hieu Tran portal" />
+    <meta name="twitter:image:type" content="image/jpeg" />
+    <meta name="twitter:url" content="https://ht47.vercel.app/en/" />
+
+    <!-- Ios icon for PWA -->
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/icons/favicon-16x16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/icons/favicon-32x32.png" />
+    <link rel="apple-touch-icon" href="/images/icons/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/images/icons/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/images/icons/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/icons/apple-touch-icon.png" />
+
+    <!-- Splash screen for ios -->
+    <link rel="apple-touch-startup-image" href="/images/screen/splash.png" />
+    <link
+      href="/images/screen/ios/Default~iphone.png"
+      media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)"
+      rel="apple-touch-startup-image"
+    />
+    <link
+      href="/images/screen/ios/Default-667h.png"
+      media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)"
+      rel="apple-touch-startup-image"
+    />
+    <link
+      href="/images/screen/ios/Default-736h.png"
+      media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)"
+      rel="apple-touch-startup-image"
+    />
+    <link rel="canonical" href="https://ht47.vercel.app/en/" />
   </head>
   <body>
     <app-root></app-root>

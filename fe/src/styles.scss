@@ -5,3 +5,7 @@
 @use "atoms/button/index" as *;
 @use "atoms/input/index" as *;
 @use "atoms/form/index" as *;
+
+@forward 'ionicons.scss' with (
+  $ionicons-font-path: 'ionicons/dist/fonts'
+);

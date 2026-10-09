@@ -3,9 +3,7 @@
 @use "../../bases/spaces" as *;
 
 .form {
-  width: min(48rem, 100%);
-  box-shadow: 0 0 0.5rem $primary-100-text-color;
-  border-radius: $round-12;
+  width: min(64rem, 100%);
   padding: $gap-24;
 }
 

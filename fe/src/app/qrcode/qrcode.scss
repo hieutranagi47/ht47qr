@@ -1,0 +1,74 @@
+@use "bases/spaces" as *;
+@use "bases/colors" as *;
+@use "bases/config" as *;
+@use "bases/rounds" as *;
+@use "mixins/breakpoints" as *;
+@use "mixins/general" as *;
+
+:host {
+    display: block;
+    transform: translate(0);
+}
+
+header {
+    position: fixed;
+    top: 0;
+    left: $container-padding;
+    right: $container-padding;
+    backdrop-filter: blur(1rem);
+    border-radius: $round-8;
+}
+
+.content {
+    padding-top: $gap-48;
+    max-height: calc(100vh - 11rem);
+    overflow-y: auto;
+}
+
+.menu-container {
+    padding: $gap-12 0;
+    overflow-x: auto;
+    /* Firefox */
+    scrollbar-width: none; 
+    /* Internet Explorer 10+ and Legacy Edge */
+    -ms-overflow-style: none;
+    &::-webkit-scrollbar {
+        display: none;
+    }
+
+    a {
+        white-space: nowrap;
+    }
+}
+
+.menu-list {
+    @include media-breakpoint-up('768') {
+        justify-content: center;
+    }
+}
+
+
+.menu-item {
+  & > a {
+    padding: 0.6rem 0.5rem;
+  }
+  
+  .underline {
+    display: inline-block;
+    width: 0;
+    height: 2px;
+    bottom: 0;
+    right: 0;
+    background-color: $body-text-color;
+    transition: width 0.3s ease;
+  }
+
+  &:hover, &:focus-within, &.active {
+    .underline {
+      width: 100%;
+      left: 0;
+      right: unset;
+    }
+  }
+
+}

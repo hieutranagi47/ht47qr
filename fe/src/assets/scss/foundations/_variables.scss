@@ -312,6 +312,7 @@ $container-paddings: (
 =                   GAPS                   =
 ==========================================*/
 $sizes: (
+  'auto': auto,
   '0': 0,
   '4': 0.4rem,
   // 4px
@@ -471,6 +472,8 @@ $overflows: (
   'y-clip': hidden clip,
 ) !default;
 /*=========== END: OVERFLOW ===========*/
+
+$zindex-modal: 1080;
 
 $enable-container-classes: true;
 $enable-typography-classes: true;

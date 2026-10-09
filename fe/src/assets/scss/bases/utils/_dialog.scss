@@ -1,0 +1,19 @@
+@use "./../../foundations/variables" as *;
+
+.center-dialog {
+    z-index: $zindex-modal;
+    max-width: 100%;
+    max-height: 100vh;
+}
+
+dialog::backdrop {
+    background-color: hsla(0, 0, 0, 0.5);
+    transition: background-color 0.4s ease;
+    z-index: 1000;
+}
+
+@starting-style {
+    dialog::backdrop {
+        background-color: hsla(0, 0, 0, 0);
+    }
+}

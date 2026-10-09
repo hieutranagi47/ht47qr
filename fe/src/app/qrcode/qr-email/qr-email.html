@@ -1,0 +1,167 @@
+<h1 class="page-title text-center mt-24">QR Code for Email</h1>
+@if (imgBlob()) {
+  <div class="form mx-auto">
+    <ht47-qr-result [imgBlob]="imgBlob()" (stopViewResult)="createANewOne()"></ht47-qr-result>
+  </div>
+} @else {
+  <form class="form mx-auto mb-40" (submit)="onSubmit($event)">
+    <div class="d-flex direction-column items-start gap-16 mb-24">
+      <label for="text-area" class="fw-600 required">Email:</label>
+      <input type="text" [formField]="qrCodeTextForm.data.email" class="text-input full-width"
+          placeholder="hieutran@abc.org"
+          [ngClass]="{'form-error': qrCodeTextForm.data.email().dirty() && qrCodeTextForm.data.email().errors().length > 0}">
+      @if (qrCodeTextForm.data.email().errors().length > 0 && qrCodeTextForm.data.email().dirty()) {
+        @for (err of qrCodeTextForm.data.email().errors(); track $index) {
+          <p class="error m-0">{{ err.message }}</p>
+        }
+      }
+    </div>
+
+    <div class="d-flex direction-column items-start gap-16 mb-24">
+      <label for="text-area" class="fw-600 required">Title:</label>
+      <input type="text" [formField]="qrCodeTextForm.data.subject" class="text-input full-width"
+          placeholder="My Email"
+          [ngClass]="{'form-error': qrCodeTextForm.data.subject().dirty() && qrCodeTextForm.data.subject().errors().length > 0}">
+      @if (qrCodeTextForm.data.subject().errors().length > 0 && qrCodeTextForm.data.subject().dirty()) {
+        @for (err of qrCodeTextForm.data.subject().errors(); track $index) {
+          <p class="error m-0">{{ err.message }}</p>
+        }
+      }
+    </div>
+
+    <div class="d-flex direction-column items-start gap-16 mb-24">
+      <label for="text-area" class="fw-600 required">Body:</label>
+      <textarea
+        class="non-resizable full-width"
+        rows="4"
+        [formField]="qrCodeTextForm.data.body"
+        placeholder="Email content"
+        aria-required="true"
+        [ngClass]="{'form-error': qrCodeTextForm.data.body().dirty() && qrCodeTextForm.data.body().errors().length > 0}"
+      ></textarea>
+      @if (qrCodeTextForm.data.body().errors().length > 0 && qrCodeTextForm.data.body().dirty()) {
+        @for (err of qrCodeTextForm.data.body().errors(); track $index) {
+          <p class="error m-0">{{ err.message }}</p>
+        }
+      }
+    </div>
+  
+    <!-- Image for the QR Code Generator -->
+    <section class="d-flex gap-12 justify-around wrap-wrap">
+      <!-- LOGO -->
+      <div class="d-flex direction-column gap-16 items-center mb-24">
+        <label for="" class="fw-600">Logo</label>
+        @if (!qrCodeTextForm.logo_img().value()) {
+          <div class="img-frame relative">
+            <figure class="upload-guide">
+              <p class="fs-0"><i class="ion ion-ios-cloud-upload fs-36"></i></p>
+              <figcaption class="fs-12"><cite>jpeg, png, <= 150x150px</cite></figcaption>
+            </figure>
+            <input type="file" accept="image/jpeg,image/jpg,image/png" [multiple]="false" class="image-upload absolute" (change)="addLogo($event)">
+          </div>
+        } @else {
+          <div class="img-frame relative">
+            <figure class="upload-guide">
+              <img class="img-preview" [src]="previewLogoImg()"
+                alt="logo preview" />
+            </figure>
+            <button type="button" (click)="clearLogoImage()"
+              class="absolute close-btn fs-0 d-flex items-center justify-center">
+              <i class="ion ion-ios-close fs-24"></i>
+            </button>
+          </div>
+        }
+      </div>
+  
+      <!-- HALFTONE - MUST no customized qr shape -->
+      @if (qrCodeTextForm.is_circle_shape().value() === false && qrCodeTextForm.is_custom_shape().value() === false) {
+        <div class="d-flex direction-column gap-16 items-center mb-24">
+          <label for="" class="fw-600">Halftone Image</label>
+          @if (!qrCodeTextForm.halftone_image().value()) {
+            <div class="img-frame relative">
+              <figure class="upload-guide">
+                <p class="fs-0"><i class="ion ion-ios-cloud-upload fs-36"></i></p>
+                <figcaption class="fs-12"><cite>jpeg, png, <= 5MB</cite></figcaption>
+              </figure>
+              <input type="file" accept="image/jpeg,image/jpg,image/png" [multiple]="false" class="image-upload absolute" (change)="addHalftoneLogo($event)">
+            </div>
+          } @else {
+            <div class="img-frame relative">
+              <figure class="upload-guide">
+                <img class="img-preview" [src]="previewHalftoneImg()"
+                  alt="Halftone image preview" />
+              </figure>
+              <button type="button" (click)="clearHalftoneImage()"
+                class="absolute close-btn fs-0 d-flex items-center justify-center">
+                <i class="ion ion-ios-close fs-24"></i>
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </section>
+  
+    <div class="d-flex direction-row items-center gap-16 mb-24">
+      <label for="" class="fw-600 required">Foreground color:</label>
+      <ht47-modal #colorModal
+        ht47Clickio (clickOut)="colorModal.closeModal()"
+        ariaLabel="Choose a color">
+        <button trigger-btn type="button" class="color-picker-btn btn-round"
+          [style.backgroundColor]="qrCodeTextForm.foreground_color().value()"
+          ></button>
+
+        <color-sketch [color]="qrCodeTextForm.foreground_color().value()" [disableAlpha]="true" (onChangeComplete)="forceGroundColorChange($event)">
+        </color-sketch>
+
+        <button class="close-button btn btn-primary full-width"
+          type="button"
+          (click)="colorModal.closeModal()">Apply</button>
+      </ht47-modal>
+    </div>
+  
+    <section class="d-flex direction-row justify-between gap-12">
+  
+      <div class="d-flex direction-row items-center gap-16 mb-24">
+        <label for="" class="fw-600">QR Width</label>
+        <input type="number" [formField]="qrCodeTextForm.qr_width" class="text-input qr-width"
+          [ngClass]="{'form-error': qrCodeTextForm.border_width().errors().length > 0}">
+      </div>
+      
+      <div class="d-flex direction-row items-center gap-16 mb-24">
+        <label for="" class="fw-600">Border Width</label>
+        <input type="number" [formField]="qrCodeTextForm.border_width" class="text-input qr-width"
+          [ngClass]="{'form-error': qrCodeTextForm.border_width().errors().length > 0}">
+      </div>
+    </section>
+  
+    <div class="d-flex direction-row items-center gap-24 mb-24">
+      <label for="" class="fw-600">Custom Shape</label>
+      @if (!qrCodeTextForm.is_custom_shape().value()) {
+        <label class="relative checkbox d-flex items-center gap-8">
+          <span>Circle:</span>
+          <span class="fs-0">
+            <i class="ion fs-24 lh-100" [ngClass]="qrCodeTextForm.is_circle_shape().value() ? 'ion-ios-checkmark-circle-outline' : 'ion-ios-radio-button-off'"></i>
+            <input class="hide-it" type="checkbox" [formField]="qrCodeTextForm.is_circle_shape">
+          </span>
+        </label>
+      }
+  
+      @if (!qrCodeTextForm.is_circle_shape().value()) {
+        <label class="relative checkbox d-flex items-center gap-8">
+          <span>Customized:</span>
+          <span class="fs-0">
+            <i class="ion fs-24 lh-100" [ngClass]="qrCodeTextForm.is_custom_shape().value() ? 'ion-ios-checkmark-circle-outline' : 'ion-ios-radio-button-off'"></i>
+            <input class="hide-it" type="checkbox" [formField]="qrCodeTextForm.is_custom_shape">
+          </span>
+        </label>
+      }
+    </div>
+  
+    <button
+      type="submit"
+      [disabled]="qrCodeTextForm().invalid() || !qrCodeTextForm().dirty()"
+      class="btn btn-primary f-button"
+    >Generate QR Code</button>
+  </form>
+  @if (error()) {<p class="error">{{ error() }}</p>}
+}
