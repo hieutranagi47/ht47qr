@@ -136,7 +136,11 @@ live rooms.
 During cold startup, the browser retries the initial signaling handshake for up
 to 30 seconds, with a 10-second timeout per attempt and a capped backoff. Startup
 503 responses are not cacheable. Once a connection succeeds, disconnects remain
-terminal; the bridge does not automatically rejoin an active match.
+terminal; the bridge does not automatically rejoin an active match. The startup
+deadline remains active until `room_joined` confirms admission, even when the
+WebSocket handshake and join acknowledgement succeeded. The board displays the
+current connection stage and keeps transport errors visible with the information
+panel collapsed.
 
 Run the bridge retry/lifecycle tests with `node --test tests/testdata/caro_bridge.test.cjs`.
 

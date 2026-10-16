@@ -9,7 +9,18 @@ const source = readFileSync(join(__dirname, '../../caro/api/wasm/bridge.js'), 'u
 function setup() {
   let now = 0, nextID = 0, options, connects = 0, disconnects = 0;
   const timers = new Map(), handlers = new Map(), pageEvents = new Map();
-  const notifications = [], sent = [], warnings = [];
+  const notifications = [], statuses = [], sent = [], warnings = [];
+  const channels = [];
+  class PeerConnection {
+    createDataChannel() {
+      const channel = { readyState: 'connecting', bufferedAmount: 0, close() {} };
+      channels.push(channel);
+      return channel;
+    }
+    async createOffer() { return { type: 'offer', sdp: 'test-offer' }; }
+    async setLocalDescription(value) { this.localDescription = value; }
+    close() {}
+  }
   const socket = {
     io: { engine: { transport: { name: 'websocket' } } },
     on(event, fn) { handlers.set(event, fn); },
@@ -26,14 +37,15 @@ function setup() {
   };
   vm.runInNewContext(source, {
     window,
+    RTCPeerConnection: PeerConnection,
     console: { warn(...args) { warnings.push(args); } },
     io(opts) { options = opts; return socket; },
     setTimeout(fn, delay) { const id = ++nextID; timers.set(id, { fn, at: now + delay }); return id; },
     clearTimeout(id) { timers.delete(id); }
   });
-  const bridge = window.caroBridge.connect((type, data) => notifications.push({ type, data }));
+  const bridge = window.caroBridge.connect((type, data) => type === 'status' ? statuses.push(data) : notifications.push({ type, data }));
   return {
-    bridge, notifications, sent, warnings, options,
+    bridge, notifications, statuses, sent, warnings, options, channels,
     get connects() { return connects; },
     get disconnects() { return disconnects; },
     get pendingTimers() { return timers.size; },
@@ -128,4 +140,47 @@ test('an established signaling disconnect is terminal and never rejoins', () => 
   assert.equal(f.warnings[0][1].reason, 'transport error');
   assert.equal(f.warnings[0][1].transport, 'websocket');
   assert.doesNotMatch(JSON.stringify(f.warnings), /private-host-token|ABC234/);
+});
+
+test('a connected socket must confirm room admission before the startup deadline', () => {
+  const f = setup();
+  assert.deepEqual(f.statuses, ['Connecting to the game server…']);
+  f.fire('connect');
+  assert.equal(f.statuses.at(-1), 'Joining the room…');
+  // A join acknowledgement alone must not leave the board waiting forever.
+  f.tick(30000);
+  assert.equal(f.notifications.length, 1);
+  assert.equal(f.notifications[0].type, 'error');
+  assert.match(f.notifications[0].data, /Room admission timed out/);
+  assert.equal(f.disconnects, 1);
+  assert.equal(f.pendingTimers, 0);
+});
+
+test('peer setup reports its stage and stops a stalled data channel', async () => {
+  const f = setup();
+  f.fire('connect');
+  f.fire('room_joined', { code: 'ABC234', role: 'PLAYER_1' });
+  f.fire('peer_joined', { code: 'ABC234' });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(f.statuses.at(-1), 'Connecting to your opponent…');
+  assert.equal(f.sent.at(-1).event, 'signal_offer');
+  assert.equal(f.channels.length, 1);
+  f.tick(30000);
+  assert.equal(f.notifications.at(-1).type, 'error');
+  assert.match(f.notifications.at(-1).data, /TURN relay/);
+  assert.equal(f.disconnects, 1);
+  assert.equal(f.pendingTimers, 0);
+});
+
+test('an open data channel clears the peer setup deadline', async () => {
+  const f = setup();
+  f.fire('connect');
+  f.fire('room_joined', { code: 'ABC234', role: 'PLAYER_1' });
+  f.fire('peer_joined', { code: 'ABC234' });
+  await new Promise(resolve => setImmediate(resolve));
+  f.channels[0].onopen();
+  f.tick(60000);
+  assert.equal(f.notifications.at(-1).type, 'open');
+  assert.equal(f.disconnects, 0);
+  assert.equal(f.pendingTimers, 0);
 });

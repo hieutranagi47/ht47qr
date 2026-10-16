@@ -10,6 +10,7 @@ window.caroBridge = {
     let connected = false, retry, retryDelay = 500, startupTimeout;
     let pendingICE = [], chain = Promise.resolve();
     const emit = (type, data) => { if (!closed) notify(type, data); };
+    const status = message => emit('status', message);
     const fail = message => {
       if (closed || failed) return;
       failed = true;
@@ -34,6 +35,7 @@ window.caroBridge = {
     };
     const peer = () => {
       if (pc) return pc;
+      status('Connecting to your opponent…');
       pc = new RTCPeerConnection(window.caroRTCConfig || { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
       pc.onicecandidate = event => {
         if (!event.candidate) return;
@@ -58,7 +60,7 @@ window.caroBridge = {
     socket.on('connect', () => {
       connected = true;
       clearTimeout(retry);
-      clearTimeout(startupTimeout);
+      status('Joining the room…');
       if (joined) { fail('Signaling connection changed. Return to rooms.'); return; }
       const payload = { code: config.code };
       if (config.hostToken) payload.hostToken = config.hostToken;
@@ -67,7 +69,11 @@ window.caroBridge = {
         if (err || !ack?.ok) fail(ack?.error?.message || 'Could not join this room.');
       });
     });
-    socket.on('room_joined', data => { joined = true; emit('room_joined', data); });
+    socket.on('room_joined', data => {
+      joined = true;
+      clearTimeout(startupTimeout);
+      emit('room_joined', data);
+    });
     socket.on('peer_joined', serial(async () => {
       const connection = peer();
       bindChannel(connection.createDataChannel('caro', { ordered: true }));
@@ -117,7 +123,10 @@ window.caroBridge = {
       socket.disconnect();
     }
     window.addEventListener('pagehide', cleanup);
-    startupTimeout = setTimeout(() => fail('Signaling unavailable. Return to rooms and try again.'), 30000);
+    startupTimeout = setTimeout(() => fail(connected
+      ? 'Room admission timed out. Return to rooms and try again.'
+      : 'Signaling unavailable. Return to rooms and try again.'), 30000);
+    status('Connecting to the game server…');
     socket.connect();
     return {
       send(data) {
