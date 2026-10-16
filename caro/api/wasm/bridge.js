@@ -3,8 +3,9 @@
 window.caroBridge = {
   connect(notify) {
     const config = window.caroConfig;
-    const socket = io({ path: '/api/v1/caro/socket.io/', reconnection: false, autoConnect: false });
+    const socket = io({ path: '/api/v1/caro/socket.io/', reconnection: false, autoConnect: false, timeout: 10000 });
     let pc, channel, closed = false, failed = false, joined = false, timeout;
+    let connected = false, retry, retryDelay = 500, startupTimeout;
     let pendingICE = [], chain = Promise.resolve();
     const emit = (type, data) => { if (!closed) notify(type, data); };
     const fail = message => {
@@ -53,6 +54,9 @@ window.caroBridge = {
       pendingICE = [];
     };
     socket.on('connect', () => {
+      connected = true;
+      clearTimeout(retry);
+      clearTimeout(startupTimeout);
       if (joined) { fail('Signaling connection changed. Return to rooms.'); return; }
       const payload = { code: config.code };
       if (config.hostToken) payload.hostToken = config.hostToken;
@@ -82,13 +86,23 @@ window.caroBridge = {
       else await pc.addIceCandidate(data);
     }));
     socket.on('room_error', error => fail(error.message || 'Room unavailable'));
-    socket.on('connect_error', () => fail('Signaling unavailable. Return to rooms and try again.'));
+    // A cold deployment can serve HTTP before signaling recovery has completed.
+    // Retry only the initial handshake: reconnecting an admitted player can finish a match.
+    socket.on('connect_error', () => {
+      if (closed) return;
+      if (connected) { fail('Signaling disconnected. Create a new room to play again.'); return; }
+      clearTimeout(retry);
+      retry = setTimeout(() => { if (!closed) socket.connect(); }, retryDelay);
+      retryDelay = Math.min(retryDelay * 2, 2000);
+    });
     socket.on('peer_disconnected', () => fail('Opponent left. Create a new room to play again.'));
     socket.on('disconnect', () => { if (!closed) fail('Signaling disconnected. Create a new room to play again.'); });
     function cleanup() {
       if (closed) return;
       closed = true;
       clearTimeout(timeout);
+      clearTimeout(retry);
+      clearTimeout(startupTimeout);
       window.removeEventListener('pagehide', cleanup);
       if (channel) { channel.onopen = channel.onmessage = channel.onclose = channel.onerror = null; channel.close(); }
       if (pc) { pc.onicecandidate = pc.ondatachannel = pc.onconnectionstatechange = null; pc.close(); }
@@ -96,6 +110,7 @@ window.caroBridge = {
       socket.disconnect();
     }
     window.addEventListener('pagehide', cleanup);
+    startupTimeout = setTimeout(() => fail('Signaling unavailable. Return to rooms and try again.'), 30000);
     socket.connect();
     return {
       send(data) {

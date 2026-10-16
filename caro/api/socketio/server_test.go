@@ -36,6 +36,16 @@ type fixture struct {
 	repo    app.Repository
 }
 
+func TestStartupAdmissionIsNotCacheable(t *testing.T) {
+	e := commonHTTP.NewEcho()
+	// Recovery has not run, so no service operation may be admitted yet.
+	socketio.NewServer(nil).Register(e)
+	w := httptest.NewRecorder()
+	e.ServeHTTP(w, httptest.NewRequest("GET", socketio.Path+"?EIO=4&transport=polling", nil))
+	require.Equal(t, 503, w.Code)
+	require.Equal(t, "no-store", w.Header().Get("Cache-Control"))
+}
+
 func setup(t *testing.T) fixture {
 	t.Helper()
 	pool, err := sql.Open("sqlite3", filepath.Join(t.TempDir(), "rooms.db")+"?_busy_timeout=5000")

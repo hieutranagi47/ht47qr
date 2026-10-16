@@ -56,6 +56,8 @@ func NewServer(service *app.Service) *Server {
 
 func (s *Server) Register(e common.EchoRouter) {
 	h := func(c *echo.Context) error {
+		// Admission failures during startup must not be cached by deployment proxies.
+		c.Response().Header().Set("Cache-Control", "no-store")
 		req := c.Request()
 		if origin := req.Header.Get("Origin"); origin != "" {
 			u, err := url.Parse(origin)

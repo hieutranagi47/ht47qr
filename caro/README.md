@@ -127,6 +127,13 @@ socket bindings cleared. Untouched host reservations survive. Socket admission i
 unavailable until this recovery completes. Do not start a second instance against
 live rooms.
 
+During cold startup, the browser retries the initial signaling handshake for up
+to 30 seconds, with a 10-second timeout per attempt and a capped backoff. Startup
+503 responses are not cacheable. Once a connection succeeds, disconnects remain
+terminal; the bridge does not automatically rejoin an active match.
+
+Run the bridge retry/lifecycle tests with `node --test tests/testdata/caro_bridge.test.cjs`.
+
 `Service.Run` owns transport shutdown and cleanup. Embedded users must run
 `Service.RunBackground(ctx)` alongside `HTTPHandler()`. Cancellation stops new
 admission, closes Socket.IO/Engine.IO connections and waits for owned callbacks;
