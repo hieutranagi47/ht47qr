@@ -9,8 +9,9 @@ const source = readFileSync(join(__dirname, '../../caro/api/wasm/bridge.js'), 'u
 function setup() {
   let now = 0, nextID = 0, options, connects = 0, disconnects = 0;
   const timers = new Map(), handlers = new Map(), pageEvents = new Map();
-  const notifications = [], sent = [];
+  const notifications = [], sent = [], warnings = [];
   const socket = {
+    io: { engine: { transport: { name: 'websocket' } } },
     on(event, fn) { handlers.set(event, fn); },
     connect() { connects++; },
     disconnect() { disconnects++; },
@@ -25,13 +26,14 @@ function setup() {
   };
   vm.runInNewContext(source, {
     window,
+    console: { warn(...args) { warnings.push(args); } },
     io(opts) { options = opts; return socket; },
     setTimeout(fn, delay) { const id = ++nextID; timers.set(id, { fn, at: now + delay }); return id; },
     clearTimeout(id) { timers.delete(id); }
   });
   const bridge = window.caroBridge.connect((type, data) => notifications.push({ type, data }));
   return {
-    bridge, notifications, sent, options,
+    bridge, notifications, sent, warnings, options,
     get connects() { return connects; },
     get disconnects() { return disconnects; },
     get pendingTimers() { return timers.size; },
@@ -55,6 +57,7 @@ function setup() {
 test('startup failures retry with capped backoff, then join once on connection', () => {
   const f = setup();
   assert.equal(f.options.reconnection, false);
+  assert.deepEqual(Array.from(f.options.transports), ['websocket']);
   assert.equal(f.options.timeout, 10000);
   for (const delay of [500, 1000, 2000, 2000]) {
     const before = f.connects;
@@ -114,11 +117,15 @@ test('an established signaling disconnect is terminal and never rejoins', () => 
   const f = setup();
   f.fire('connect');
   f.fire('room_joined', { code: 'ABC234', role: 'PLAYER_1' });
-  f.fire('disconnect');
+  f.fire('disconnect', 'transport error');
   f.tick(60000);
   assert.equal(f.connects, 1);
   assert.equal(f.sent.length, 1);
   assert.equal(f.notifications.at(-1).type, 'error');
   assert.match(f.notifications.at(-1).data, /Signaling disconnected/);
   assert.equal(f.pendingTimers, 0);
+  assert.equal(f.warnings.length, 1);
+  assert.equal(f.warnings[0][1].reason, 'transport error');
+  assert.equal(f.warnings[0][1].transport, 'websocket');
+  assert.doesNotMatch(JSON.stringify(f.warnings), /private-host-token|ABC234/);
 });

@@ -85,7 +85,13 @@ Endpoint: `/api/v1/caro/socket.io/`, same origin as REST. The Go server is
 `github.com/zishang520/socket.io/servers/socket/v3 v3.0.6`, which supports browser
 `socket.io-client` 4.x (Socket.IO protocol revision 5, Engine.IO 4), including
 HTTP long-polling and WebSocket upgrade. The WASM bridge calls the browser JS
-client, using `io({ path: '/api/v1/caro/socket.io/' })`.
+client, using `io({ path: '/api/v1/caro/socket.io/', transports: ['websocket'] })`.
+The browser connects directly over WebSocket so its handshake, join and heartbeat
+remain on one connection. Polling followed by an upgrade requires sticky routing
+across requests, which a deployment proxy may not provide. The server retains
+polling support for other clients. This transport choice does not provide routing
+between different players on different processes; the single-process requirement
+below still applies.
 Sources: [v3 upgrade guide](https://github.com/zishang520/socket.io/blob/main/docs/UPGRADE.md),
 [Socket.IO protocol](https://github.com/socketio/socket.io-protocol),
 [Engine.IO protocol](https://github.com/socketio/engine.io-protocol).

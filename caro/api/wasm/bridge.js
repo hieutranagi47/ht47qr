@@ -3,7 +3,9 @@
 window.caroBridge = {
   connect(notify) {
     const config = window.caroConfig;
-    const socket = io({ path: '/api/v1/caro/socket.io/', reconnection: false, autoConnect: false, timeout: 10000 });
+    // Polling requires sticky routing for every GET/POST and the upgrade request.
+    // Keep admission, room joins and heartbeats on one WebSocket connection.
+    const socket = io({ path: '/api/v1/caro/socket.io/', transports: ['websocket'], reconnection: false, autoConnect: false, timeout: 10000 });
     let pc, channel, closed = false, failed = false, joined = false, timeout;
     let connected = false, retry, retryDelay = 500, startupTimeout;
     let pendingICE = [], chain = Promise.resolve();
@@ -96,7 +98,12 @@ window.caroBridge = {
       retryDelay = Math.min(retryDelay * 2, 2000);
     });
     socket.on('peer_disconnected', () => fail('Opponent left. Create a new room to play again.'));
-    socket.on('disconnect', () => { if (!closed) fail('Signaling disconnected. Create a new room to play again.'); });
+    socket.on('disconnect', reason => {
+      if (closed) return;
+      // Do not log room credentials, signal payloads or raw transport errors.
+      console.warn('Caro signaling disconnected', { reason, transport: socket.io.engine?.transport.name });
+      fail('Signaling disconnected. Create a new room to play again.');
+    });
     function cleanup() {
       if (closed) return;
       closed = true;
