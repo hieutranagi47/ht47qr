@@ -7,3 +7,7 @@ data
 *.db
 *.db-shm
 *.db-wal
+
+# Runtime configuration must not be copied into the build image.
+.env
+.env.*

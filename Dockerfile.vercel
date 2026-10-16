@@ -33,6 +33,10 @@ RUN --mount=type=cache,target=/go/pkg/mod go mod download
 
 COPY . .
 
+# The Caro source module is outside this Docker context. Run task build-wasm
+# before building, and include both generated files in Vercel's source upload.
+RUN test -s caro/api/wasm/caro.wasm && test -s caro/api/wasm/wasm_exec.js
+
 # Replace checked-in assets with the production frontend before Go embeds them.
 RUN rm -rf /app/client/api
 COPY --from=fe_builder /app/client/api/ /app/client/api/
@@ -48,21 +52,19 @@ WORKDIR /app
 
 COPY --from=builder /app/htqrcode /app/htqrcode
 
-# The service requires all four listeners; Vercel routes to the HTTP listener.
-ENV SERVER_PORT_TLS=8443 \
-    SERVER_SSE_PORT=8081 \
-    SERVER_SSE_PORT_TLS=8444
-
-ENV GOMAXPROCS=2
-ENV GODEBUG=madvdontneed=1,netdns=go,gctrace=1,schedtrace=1000
-ENV GOMEMLIMIT=1800MiB
-ENV GOGC=90
-ENV TZ=Asia/Ho_Chi_Minh
-ENV SERVER_PORT="8888"
-ENV SERVER_PORT_TLS="8443"
-ENV SERVER_SSE_PORT="8886"
-ENV SERVER_SSE_PORT_TLS="8446"
-ENV DATABASE_BACKEND=postgres
+# PORT is Vercel's public HTTP listener; the other listeners remain internal.
+ENV PORT=80 \
+    SERVER_PORT_TLS=8443 \
+    SERVER_SSE_PORT=8886 \
+    SERVER_SSE_PORT_TLS=8446 \
+    SERVER_GRPC_PORT="" \
+    DATABASE_BACKEND=postgres \
+    SQLITE_PATH=/app/data/htqrcode.db \
+    GOMAXPROCS=2 \
+    GOMEMLIMIT=900MiB \
+    GOGC=90 \
+    GODEBUG=madvdontneed=1,netdns=go,gctrace=1,schedtrace=1000 \
+    TZ=Asia/Ho_Chi_Minh
 
 # Supply DATABASE_URL (or POSTGRES_URL) through Vercel runtime environment settings.
 # Optionally set DATABASE_URL_UNPOOLED (or POSTGRES_URL_NON_POOLING) for migrations.

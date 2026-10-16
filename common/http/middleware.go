@@ -37,7 +37,7 @@ func useMiddlewares(e *echo.Echo) {
 		middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(20.0)),
 		middleware.ContextTimeoutWithConfig(middleware.ContextTimeoutConfig{
 			Timeout: 10 * time.Second,
-			Skipper: isSSERequest,
+			Skipper: isLongLivedRequest,
 		}),
 		middleware.Recover(),
 		// Correlation-ID runs first: available in context for the request log middleware.
@@ -115,7 +115,7 @@ func (w *bodyCapturingWriter) Unwrap() http.ResponseWriter {
 func requestLogMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c *echo.Context) error {
 		// Never buffer an unbounded stream for request logging.
-		if isSSERequest(c) {
+		if isSSERequest(c) || isSocketIORequest(c) || (c.Request().Method == http.MethodPost && c.Path() == "/api/v1/rooms") {
 			return next(c)
 		}
 		// Read request body and restore it for the handler.
@@ -188,3 +188,9 @@ func sseMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		return next(c)
 	}
 }
+
+// Socket.IO owns heartbeat and polling timeouts; ordinary API timeouts stay intact.
+func isSocketIORequest(c *echo.Context) bool {
+	return c.Path() == "/api/v1/caro/socket.io/" || c.Path() == "/api/v1/caro/socket.io/*"
+}
+func isLongLivedRequest(c *echo.Context) bool { return isSSERequest(c) || isSocketIORequest(c) }

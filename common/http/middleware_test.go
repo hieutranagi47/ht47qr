@@ -126,3 +126,29 @@ func TestSameOriginRequests(t *testing.T) {
 		})
 	}
 }
+
+func TestSocketIOSkipsDeadlineAndBodyCapture(t *testing.T) {
+	e := NewEcho()
+	e.GET("/api/v1/caro/socket.io/*", func(c *echo.Context) error {
+		_, deadline := c.Request().Context().Deadline()
+		require.False(t, deadline)
+		_, captured := c.Response().(*bodyCapturingWriter)
+		require.False(t, captured)
+		return c.NoContent(http.StatusOK)
+	})
+	e.POST("/api/v1/rooms", func(c *echo.Context) error {
+		_, deadline := c.Request().Context().Deadline()
+		require.True(t, deadline)
+		_, captured := c.Response().(*bodyCapturingWriter)
+		require.False(t, captured)
+		return c.String(http.StatusCreated, "private-host-token")
+	})
+	for _, tc := range []struct {
+		method, path string
+		status       int
+	}{{"GET", "/api/v1/caro/socket.io/?EIO=4&transport=polling", 200}, {"POST", "/api/v1/rooms", 201}} {
+		w := httptest.NewRecorder()
+		e.ServeHTTP(w, httptest.NewRequest(tc.method, tc.path, nil))
+		require.Equal(t, tc.status, w.Code)
+	}
+}

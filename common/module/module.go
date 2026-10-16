@@ -11,6 +11,7 @@ import (
 type Name string
 
 const (
+	Caro       Name = "caro"
 	QRCode     Name = "qrcode"
 	Client     Name = "client"
 	ShortenURL Name = "shorten_url"

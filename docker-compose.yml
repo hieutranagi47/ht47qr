@@ -3,7 +3,10 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile
-      no_cache: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    stop_grace_period: 20s
     environment:
       # Giới hạn Concurrency (Xử lý đồng thời) và CPU
       GOMAXPROCS: "2" # Mặc định, Go sẽ lấy số CPU của máy Host làm giá trị GOMAXPROCS. Nếu bạn chạy container trên một server 64 cores nhưng chỉ giới hạn tài nguyên container là cpus: 2, Go (từ phiên bản 1.24 trở về trước) vẫn có thể hiểu nhầm là có 64 cores, dẫn đến việc tranh chấp CPU và giảm hiệu năng (CPU throttling).
@@ -11,7 +14,16 @@ services:
       GOMEMLIMIT: "900MiB" # ~ 90% of the RAM. Đặt giới hạn mềm cho tổng lượng bộ nhớ mà Go Runtime được phép dùng. Khi bộ nhớ chạm ngưỡng này, bộ thu gom rác (Garbage Collector - GC) sẽ bị kích hoạt liên tục và quyết liệt hơn để giải phóng RAM, cố gắng không để container vượt quá giới hạn và bị Docker Kill.
       GOGC: "90" # Xác định tỷ lệ phần trăm tăng trưởng của bộ nhớ heap trước khi đợt thu gom rác tiếp theo được kích hoạt (mặc định là 100).
       TZ: Asia/Ho_Chi_Minh
-      SERVER_PORT: "8888"
+      # Container listeners are fixed; SERVER_PORT below selects the host port.
+      SERVER_PORT: "8080"
+      DATABASE_BACKEND: postgres
+      # Use the Compose service name, not localhost, to reach PostgreSQL.
+      # Use URL-safe values for these connection-string components.
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-htqrcode}:${POSTGRES_PASSWORD:-htqrcode-local}@postgres:5432/${POSTGRES_DB:-htqrcode}?sslmode=disable"
+      DATABASE_URL_UNPOOLED: ""
+      POSTGRES_URL: ""
+      POSTGRES_URL_NON_POOLING: ""
+      SERVER_GRPC_PORT: ""
       SERVER_PORT_TLS: "8443"
       SERVER_SSE_PORT: "8886"
       SERVER_SSE_PORT_TLS: "8446"
@@ -73,7 +85,28 @@ services:
         9h1+gR88VJwNpZjX34Z3Ff7oZLE=
         -----END PRIVATE KEY-----
     ports:
-      - "${SERVER_PORT:-8888}:8888"
+      - "${SERVER_PORT:-8888}:8080"
       - "${SERVER_PORT_TLS:-8443}:8443"
       - "${SERVER_SSE_PORT:-8886}:8886"
       - "${SERVER_SSE_PORT_TLS:-8446}:8446"
+    volumes:
+      - htqrcode-data:/app/data
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER:-htqrcode}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-htqrcode-local}"
+      POSTGRES_DB: "${POSTGRES_DB:-htqrcode}"
+    healthcheck:
+      test: ["CMD-SHELL", 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  htqrcode-data:
+  postgres-data:

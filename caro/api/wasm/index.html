@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Caro — Five in a row</title>
+<link rel="stylesheet" href="/caro/wasm/style.css">
+<script defer src="/caro/wasm/socket.io.min.js"></script>
+<script defer src="/caro/wasm/wasm_exec.js"></script>
+<script defer src="/caro/wasm/bridge.js"></script>
+<script defer src="/caro/wasm/app.js"></script>
+</head>
+<body>
+<main id="lobby">
+<header><a class="brand" href="/caro/boards">caro<span>●</span></a><span class="eyebrow">A LITTLE STRATEGY. A LITTLE RIVALRY.</span></header>
+<section class="intro"><p class="eyebrow">FIVE IN A ROW</p><h1>Your next move<br>starts here.</h1><p>Find a challenger, share a board, and make your mark.<br>A classic 15 × 15 game for two.</p></section>
+<p id="status" role="status" aria-live="polite"></p>
+<div class="columns">
+<section class="panel"><h2>Make it your game.</h2><form id="create-form">
+<label>Your name<input id="display-name" name="displayName" maxlength="50" required autocomplete="nickname" placeholder="What should we call you?"></label>
+<div class="form-row"><label>Match length<select name="maxGames"><option value="1">One game</option><option value="3" selected>Best of 3</option><option value="5">Best of 5</option><option value="7">Best of 7</option></select></label><label>Visibility<select name="roomType"><option value="PUBLIC">Public</option><option value="PRIVATE">Private</option></select></label></div>
+<button id="create-button" type="submit">Create a room <span>↗</span></button>
+<p class="hint">Private rooms are only accessible with their room code.</p>
+</form><hr><form id="join-form"><label>Have a room code?<div class="form-row"><input name="code" maxlength="6" pattern="[A-HJ-NP-Za-hj-np-z2-9]{6}" required placeholder="ABC234" aria-label="Room code"><button type="submit">Join room</button></div></label></form></section>
+<section class="panel"><div class="section-heading"><h2>Open boards <span id="room-count">0</span></h2><button id="refresh" class="quiet" type="button">Refresh ↻</button></div><p class="hint">Public rooms waiting for their second player.</p><div id="rooms" aria-live="polite"><p class="empty">Loading rooms…</p></div></section>
+</div><footer><span>Easy to learn. Always another move.</span><span>X <span class="dot">/</span> O</span></footer>
+</main>
+<section id="room" hidden><a href="/caro/boards" class="brand">caro<span>●</span></a><h1 id="room-title">Join the board.</h1><p id="room-description"></p><p id="room-status" role="status" aria-live="polite"></p><form id="enter-form"><label>Your name<input id="guest-name" maxlength="50" required autocomplete="nickname"></label><button type="submit" id="enter-button">Enter game ↗</button></form><p><button class="quiet" id="copy-link" type="button">Copy invite link</button> <a href="/caro/boards">Back to rooms</a></p><p class="hint">The host plays X. Five consecutive stones wins a round.</p></section>
+</body></html>

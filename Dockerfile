@@ -1,30 +1,12 @@
-# Build the Angular frontend into client/api, which is embedded by the Go app.
-FROM node:24-alpine AS frontend
-
-WORKDIR /app/fe
-
-RUN npm install --global pnpm@10.8.1
-
-COPY fe/package.json fe/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
-
-COPY fe/angular.json fe/tsconfig*.json ./
-COPY fe/src/ ./src/
-COPY fe/public/ ./public/
-
-RUN pnpm run build --configuration development
-
-# Build the Go server with the generated frontend assets.
+# Build the server with the checked-in client/api and Caro web assets.
+# Generated Go sources and web assets must be present before building.
 FROM golang:1.27.1-alpine AS builder
 
-RUN apk add --no-cache ca-certificates gcc libc-dev musl-dev protobuf
-
-# Install the tools required by task gen (protobuf and SQL generation).
-RUN --mount=type=cache,target=/go/pkg/mod \
-    go install github.com/go-task/task/v3/cmd/task@v3.53.1 \
-    && go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.12 \
-    && go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1 \
-    && go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1
+# Trust the corporate CA before downloading OS packages or Go modules.
+COPY corp-ca.crt /usr/local/share/ca-certificates/corp-ca.crt
+RUN cat /usr/local/share/ca-certificates/corp-ca.crt >> /etc/ssl/certs/ca-certificates.crt \
+    && apk add --no-cache ca-certificates gcc musl-dev \
+    && update-ca-certificates
 
 WORKDIR /app
 
@@ -32,15 +14,16 @@ COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
 
 COPY . ./
-COPY --from=frontend /app/client/api/ ./client/api/
-RUN --mount=type=cache,target=/go/pkg/mod task gen
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=1 go build -mod=readonly -tags musl -trimpath -o /out/htqrcode ./cmd
 
-RUN CGO_ENABLED=1 go build -tags musl -trimpath -o /out/htqrcode ./cmd
-
-# Run as an unprivileged user in a small runtime image.
 FROM alpine:3.22 AS runtime
 
-RUN apk add --no-cache ca-certificates \
+COPY corp-ca.crt /usr/local/share/ca-certificates/corp-ca.crt
+RUN cat /usr/local/share/ca-certificates/corp-ca.crt >> /etc/ssl/certs/ca-certificates.crt \
+    && apk add --no-cache ca-certificates tzdata \
+    && update-ca-certificates \
     && addgroup -S app \
     && adduser -S -G app app
 
@@ -50,46 +33,19 @@ COPY --from=builder /out/htqrcode ./htqrcode
 
 USER app
 
+# Supply DATABASE_URL and TLS_CERT/TLS_KEY at runtime (Compose does this).
 ENV SERVER_PORT=8080 \
     SERVER_PORT_TLS=8443 \
-    SERVER_SSE_PORT=8081 \
-    SERVER_SSE_PORT_TLS=8444 \
-    SQLITE_PATH=/app/data/htqrcode.d
+    SERVER_SSE_PORT=8886 \
+    SERVER_SSE_PORT_TLS=8446 \
+    SERVER_GRPC_PORT="" \
+    DATABASE_BACKEND=postgres \
+    SQLITE_PATH=/app/data/htqrcode.db \
+    TZ=Asia/Ho_Chi_Minh
 
-ENV GOMAXPROCS=2
-ENV GODEBUG=madvdontneed=1,netdns=go,gctrace=1,schedtrace=1000
-ENV GOMEMLIMIT=1800MiB
-ENV GOGC=90
-ENV TZ=Asia/Ho_Chi_Minh
-ENV SERVER_PORT="8888"
-ENV SERVER_PORT_TLS="8443"
-ENV SERVER_SSE_PORT="8886"
-ENV SERVER_SSE_PORT_TLS="8446"
-# NEO
-# Recommended for most uses
-ENV DATABASE_URL=postgresql://neondb_owner:npg_DyRMXAno0V8Z@ep-purple-wildflower-b3zfpjn0-pooler.c-4.ap-southeast-1.aws.neon.tech/neondb?channel_binding=require&sslmode=require
+EXPOSE 8080 8443 8886 8446
 
-# For uses requiring a connection without pgbouncer
-ENV DATABASE_URL_UNPOOLED=postgresql://neondb_owner:npg_DyRMXAno0V8Z@ep-purple-wildflower-b3zfpjn0.c-4.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
-
-# Parameters for constructing your own connection string
-ENV PGHOST=ep-purple-wildflower-b3zfpjn0-pooler.c-4.ap-southeast-1.aws.neon.tech
-ENV ENV PGHOST_UNPOOLED=ep-purple-wildflower-b3zfpjn0.c-4.ap-southeast-1.aws.neon.tech
-ENV PGUSER=neondb_owner
-ENV PGDATABASE=neondb
-ENV PGPASSWORD=npg_DyRMXAno0V8Z
-
-# Parameters for Vercel Postgres Templates
-ENV POSTGRES_URL=postgresql://neondb_owner:npg_DyRMXAno0V8Z@ep-purple-wildflower-b3zfpjn0-pooler.c-4.ap-southeast-1.aws.neon.tech/neondb?channel_binding=require&sslmode=require
-ENV POSTGRES_URL_NON_POOLING=postgresql://neondb_owner:npg_DyRMXAno0V8Z@ep-purple-wildflower-b3zfpjn0.c-4.ap-southeast-1.aws.neon.tech/neondb?channel_binding=require&sslmode=require
-ENV POSTGRES_USER=neondb_owner
-ENV POSTGRES_HOST=ep-purple-wildflower-b3zfpjn0-pooler.c-4.ap-southeast-1.aws.neon.tech
-ENV POSTGRES_PASSWORD=npg_DyRMXAno0V8Z
-ENV POSTGRES_DATABASE=neondb
-ENV POSTGRES_URL_NO_SSL=postgresql://neondb_owner:npg_DyRMXAno0V8Z@ep-purple-wildflower-b3zfpjn0-pooler.c-4.ap-southeast-1.aws.neon.tech/neondb
-ENV POSTGRES_PRISMA_URL=postgresql://neondb_owner:npg_DyRMXAno0V8Z@ep-purple-wildflower-b3zfpjn0-pooler.c-4.ap-southeast-1.aws.neon.tech/neondb?channel_binding=require&connect_timeout=15&sslmode=require
-
-EXPOSE 8080 8081 8443 8444
-VOLUME ["/app/data"]
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD wget -q -O /dev/null "http://127.0.0.1:${SERVER_PORT}/health" || exit 1
 
 ENTRYPOINT ["/app/htqrcode"]

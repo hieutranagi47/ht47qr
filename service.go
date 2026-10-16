@@ -15,6 +15,7 @@ import (
 	echo "github.com/labstack/echo/v5"
 	"golang.org/x/sync/errgroup"
 
+	"htqrcode/caro"
 	"htqrcode/client"
 	grpcTransport "htqrcode/common/grpc"
 	commonHTTP "htqrcode/common/http"
@@ -64,9 +65,9 @@ func New(
 
 	modules := []module.Module{qrcode.NewModule()}
 	if services.Postgres != nil {
-		modules = append(modules, shorten_url.NewPostgresModule(services.Postgres, services.PostgresMigrations))
+		modules = append(modules, shorten_url.NewPostgresModule(services.Postgres, services.PostgresMigrations), caro.NewPostgresModule(services.Postgres, services.PostgresMigrations))
 	} else if services.Database != nil {
-		modules = append(modules, shorten_url.NewModule(services.Database))
+		modules = append(modules, shorten_url.NewModule(services.Database), caro.NewModule(services.Database))
 	}
 	modules = append(modules, client.NewModule())
 

@@ -34,6 +34,10 @@ func updateInSQLiteTx(ctx context.Context, db *sql.DB, fn func(context.Context, 
 		return err
 	}
 	defer conn.Close()
+	// Foreign keys are connection-local and must be enabled before a transaction.
+	if _, err = conn.ExecContext(ctx, "PRAGMA foreign_keys = ON"); err != nil {
+		return err
+	}
 	if _, err = conn.ExecContext(ctx, "BEGIN IMMEDIATE"); err != nil {
 		return err
 	}
