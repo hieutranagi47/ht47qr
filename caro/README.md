@@ -130,10 +130,13 @@ disconnect cannot remove a new socket. Finished rooms cannot join or relay.
 Run **one signaling process per database**. The socket registry and event ordering
 are process-local; a shared PostgreSQL database alone does not route notifications.
 Multiple replicas require shared relay/routing and coordinated recovery before use.
-On background startup, rooms with stale connected sockets are finished and their
-socket bindings cleared. Untouched host reservations survive. Socket admission is
-unavailable until this recovery completes. Do not start a second instance against
-live rooms.
+On background startup, WAITING and PLAYING rooms reopen as WAITING: stale guest
+memberships are removed and socket bindings are cleared, while host reservations,
+credentials, invite codes and original expiry times survive. Hosts can reopen
+their boards with the same token and guests can join the same invite URL for a
+fresh match. FINISHED rooms remain finished. Socket admission is unavailable until
+this recovery completes. Do not start a second instance against live rooms: startup
+recovery cannot distinguish another process's live sockets from stale ones.
 
 During cold startup, the browser retries the initial signaling handshake for up
 to 30 seconds, with a 10-second timeout per attempt and a capped backoff. Startup
@@ -207,7 +210,7 @@ X is the host; first to `maxGames/2 + 1` round wins wins the set. Five or more
 consecutive stones counts, including blocked ends. Draws replay without scores,
 and both players acknowledge the next round. The completed set locks play and
 returns to the lobby after five minutes, disconnecting the sockets then. The
-existing backend marks a room FINISHED when either player leaves; there is no
+backend returns a room to WAITING when either player leaves; there is no
 server move/score/result endpoint. Production networks that block direct P2P
 need deployment-provided TURN configuration (see the client README).
 

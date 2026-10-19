@@ -48,6 +48,11 @@ func TestStartupAdmissionIsNotCacheable(t *testing.T) {
 
 func setup(t *testing.T) fixture {
 	t.Helper()
+	return setupBeforeStartup(t, nil)
+}
+
+func setupBeforeStartup(t *testing.T, seed func(*app.Service)) fixture {
+	t.Helper()
 	pool, err := sql.Open("sqlite3", filepath.Join(t.TempDir(), "rooms.db")+"?_busy_timeout=5000")
 	require.NoError(t, err)
 	t.Cleanup(func() { pool.Close() })
@@ -56,6 +61,9 @@ func setup(t *testing.T) fixture {
 	clock.Store(time.Now().UnixNano())
 	repo := db.NewRepository(pool)
 	service := app.NewService(repo, func() time.Time { return time.Unix(0, clock.Load()) }, domain.RandomCode)
+	if seed != nil {
+		seed(service)
+	}
 	signals := socketio.NewServer(service)
 	e := commonHTTP.NewEcho()
 	signals.Register(e)
@@ -166,6 +174,39 @@ func (c *wireClient) event(t *testing.T, name string) json.RawMessage {
 	result := c.events[name][0]
 	c.events[name] = c.events[name][1:]
 	return result
+}
+
+func TestSocketIOStartupKeepsWaitingRoomJoinable(t *testing.T) {
+	ctx := context.Background()
+	var created app.Created
+	f := setupBeforeStartup(t, func(service *app.Service) {
+		var err error
+		created, err = service.Create(ctx, app.CreateInput{IdempotencyKey: uuid.NewString(), DisplayName: "Host", RoomType: "PUBLIC", MaxGames: 5, OwnerIP: "192.0.2.1"})
+		require.NoError(t, err)
+		_, err = service.Join(ctx, created.Room.Code(), "", "stale-host", created.HostToken, "192.0.2.1")
+		require.NoError(t, err)
+	})
+	code := created.Room.Code()
+	response, err := f.server.Client().Get(f.server.URL + "/api/v1/rooms/" + code)
+	require.NoError(t, err)
+	defer response.Body.Close()
+	require.Equal(t, 200, response.StatusCode)
+	var room struct {
+		Status   string `json:"status"`
+		Joinable bool   `json:"joinable"`
+	}
+	require.NoError(t, json.NewDecoder(response.Body).Decode(&room))
+	require.Equal(t, domain.Waiting, room.Status)
+	require.True(t, room.Joinable)
+	guest := connect(t, f)
+	require.True(t, guest.emit(t, "join_room", map[string]any{"code": code, "displayName": "Guest"}))
+	require.NotEmpty(t, guest.event(t, "room_joined"))
+	host := connect(t, f)
+	require.True(t, host.emit(t, "join_room", map[string]any{"code": code, "hostToken": created.HostToken}))
+	require.NotEmpty(t, host.event(t, "room_joined"))
+	require.NotEmpty(t, host.event(t, "peer_joined"))
+	require.True(t, host.emit(t, "signal_offer", map[string]any{"code": code, "data": map[string]any{"type": "offer", "sdp": "after-recovery"}}))
+	require.Contains(t, string(guest.event(t, "signal_offer")), "after-recovery")
 }
 
 func TestSocketIOMembershipRelayAndExpiry(t *testing.T) {

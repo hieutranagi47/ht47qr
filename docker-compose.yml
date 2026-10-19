@@ -6,8 +6,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      turn:
-        condition: service_started
+      # turn:
+      #   condition: service_started
     stop_grace_period: 20s
     environment:
       # Giới hạn Concurrency (Xử lý đồng thời) và CPU
@@ -100,30 +100,30 @@ services:
       - htqrcode-data:/app/data
 
   # Local development relay; use runtime-issued credentials in the browser.
-  turn:
-    image: coturn/coturn:4.18.0-r0-alpine
-    # Pass arguments literally (the image's wrapper evaluates them with a shell).
-    entrypoint: ["turnserver"]
-    command:
-      - -n
-      - --log-file=stdout
-      - --listening-ip=0.0.0.0
-      # Keep the container's real relay address: both relay-only clients reach
-      # it through TURN. Browsers reject 127.0.0.1 as a remote ICE candidate.
-      - --listening-port=3478
-      - --min-port=49160
-      - --max-port=49200
-      - --realm=caro.local
-      - --use-auth-secret
-      - --static-auth-secret=${CARO_TURN_SECRET:-caro-local-development-only}
-      - --fingerprint
-      - --no-tls
-      - --no-cli
-      - --no-multicast-peers
-    ports:
-      - "${CARO_TURN_HOST:-127.0.0.1}:3478:3478/tcp"
-      - "${CARO_TURN_HOST:-127.0.0.1}:3478:3478/udp"
-      - "${CARO_TURN_HOST:-127.0.0.1}:49160-49200:49160-49200/udp"
+  # turn:
+  #   image: coturn/coturn:4.18.0-r0-alpine
+  #   # Pass arguments literally (the image's wrapper evaluates them with a shell).
+  #   entrypoint: ["turnserver"]
+  #   command:
+  #     - -n
+  #     - --log-file=stdout
+  #     - --listening-ip=0.0.0.0
+  #     # Keep the container's real relay address: both relay-only clients reach
+  #     # it through TURN. Browsers reject 127.0.0.1 as a remote ICE candidate.
+  #     - --listening-port=3478
+  #     - --min-port=49160
+  #     - --max-port=49200
+  #     - --realm=caro.local
+  #     - --use-auth-secret
+  #     - --static-auth-secret=${CARO_TURN_SECRET:-caro-local-development-only}
+  #     - --fingerprint
+  #     - --no-tls
+  #     - --no-cli
+  #     - --no-multicast-peers
+  #   ports:
+  #     - "${CARO_TURN_HOST:-127.0.0.1}:3478:3478/tcp"
+  #     - "${CARO_TURN_HOST:-127.0.0.1}:3478:3478/udp"
+  #     - "${CARO_TURN_HOST:-127.0.0.1}:49160-49200:49160-49200/udp"
 
   postgres:
     image: postgres:17-alpine

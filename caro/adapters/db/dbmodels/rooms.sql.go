@@ -190,8 +190,17 @@ func (q *Queries) PublicWaiting(ctx context.Context, cutoff int64) ([]CaroRoom, 
 	return items, nil
 }
 
+const resetGuests = `-- name: ResetGuests :exec
+DELETE FROM caro_room_players WHERE player_role='PLAYER_2' AND room_id IN (SELECT id FROM caro_rooms WHERE status='WAITING')
+`
+
+func (q *Queries) ResetGuests(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, resetGuests)
+	return err
+}
+
 const resetRoomStatus = `-- name: ResetRoomStatus :exec
-UPDATE caro_rooms SET status='FINISHED' WHERE EXISTS (SELECT 1 FROM caro_room_players p WHERE p.room_id=caro_rooms.id AND p.socket_id IS NOT NULL)
+UPDATE caro_rooms SET status='WAITING' WHERE status='PLAYING'
 `
 
 func (q *Queries) ResetRoomStatus(ctx context.Context) error {

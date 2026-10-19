@@ -179,7 +179,7 @@ func TestVisibilityAndAtomicHostReservation(t *testing.T) {
 		require.NoError(t, s.ResetConnections(ctx))
 		stored, err = s.Get(ctx, private.Room.Code())
 		require.NoError(t, err)
-		require.Equal(t, domain.Finished, stored.Status())
+		require.Equal(t, domain.Waiting, stored.Status())
 		require.Empty(t, stored.Players()[0].Socket())
 		// Cascades must free unique player IDs even when the DSN did not enable foreign keys.
 		count, err := repo.DeleteExpired(ctx, now.Add(domain.Lifetime))
@@ -189,6 +189,78 @@ func TestVisibilityAndAtomicHostReservation(t *testing.T) {
 		count, err = repo.DeleteExpired(ctx, now.Add(domain.Lifetime))
 		require.NoError(t, err)
 		require.EqualValues(t, 1, count)
+	})
+}
+
+func TestStartupRecoveryPreservesRoomInvites(t *testing.T) {
+	testRepositories(t, func(t *testing.T, repo app.Repository) {
+		for _, state := range []string{"reservation", "host waiting", "guest waiting", "playing", "finished"} {
+			t.Run(state, func(t *testing.T) {
+				ctx := context.Background()
+				now := time.Now().UTC().Truncate(time.Microsecond)
+				s := app.NewService(repo, func() time.Time { return now }, domain.RandomCode)
+				created, err := s.Create(ctx, app.CreateInput{IdempotencyKey: uuid.NewString(), DisplayName: "Host", RoomType: "PUBLIC", MaxGames: 5, OwnerIP: "192.0.2.1"})
+				require.NoError(t, err)
+				code := created.Room.Code()
+				if state == "host waiting" || state == "playing" {
+					_, err = s.Join(ctx, code, "", "old-host", created.HostToken, "192.0.2.1")
+					require.NoError(t, err)
+				}
+				if state == "guest waiting" || state == "playing" {
+					_, err = s.Join(ctx, code, "Guest", "old-guest", "", "192.0.2.2")
+					require.NoError(t, err)
+				}
+				if state == "finished" {
+					_, err = repo.Update(ctx, code, now, func(r *domain.Room) error {
+						finished, err := domain.RestoreRoom(r.ID(), r.Code(), r.Type(), domain.Finished, r.MaxGames(), r.CreatedAt(), r.ExpiresAt(), r.Players(), r.OwnerIP())
+						*r = finished
+						return err
+					})
+					require.NoError(t, err)
+				}
+				// A cold startup must release stale membership without ending the room.
+				require.NoError(t, s.ResetConnections(ctx))
+				require.NoError(t, s.ResetConnections(ctx))
+				room, err := s.Get(ctx, code)
+				require.NoError(t, err)
+				require.Equal(t, created.Room.ExpiresAt(), room.ExpiresAt())
+				require.Equal(t, created.Room.MaxGames(), room.MaxGames())
+				require.Len(t, room.Players(), 1)
+				require.Equal(t, created.Room.Players()[0], room.Players()[0])
+				if state == "finished" {
+					require.Equal(t, domain.Finished, room.Status())
+					_, err = s.Join(ctx, code, "Guest", "new-guest", "", "192.0.2.2")
+					require.ErrorIs(t, err, domain.ErrUnavailable)
+					return
+				}
+				require.Equal(t, domain.Waiting, room.Status())
+				require.True(t, room.Joinable(now))
+				listed, err := s.List(ctx)
+				require.NoError(t, err)
+				require.Contains(t, listed, room)
+				_, err = s.Join(ctx, code, "", "intruder", "wrong-token", "192.0.2.3")
+				require.ErrorIs(t, err, domain.ErrUnauthorized)
+				_, err = s.Join(ctx, code, "", "new-host", created.HostToken, "192.0.2.1")
+				require.NoError(t, err)
+				joined, err := s.Join(ctx, code, "New guest", "new-guest", "", "192.0.2.2")
+				require.NoError(t, err)
+				require.Equal(t, domain.Playing, joined.Room.Status())
+				// Delayed departures from before recovery cannot remove the new players.
+				for _, oldSocket := range []string{"old-host", "old-guest"} {
+					left, err := s.Leave(ctx, code, oldSocket)
+					require.NoError(t, err)
+					require.False(t, left.Changed)
+				}
+				peer, err := s.Peer(ctx, code, "new-host")
+				require.NoError(t, err)
+				require.Equal(t, "new-guest", peer)
+				// Keep other scenarios independent of these live bindings.
+				_, err = s.Leave(ctx, code, "new-guest")
+				require.NoError(t, err)
+				_, err = s.Leave(ctx, code, "new-host")
+				require.NoError(t, err)
+			})
+		}
 	})
 }
 

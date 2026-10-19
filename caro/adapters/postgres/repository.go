@@ -253,6 +253,9 @@ func (r *Repository) ResetConnections(ctx context.Context) error {
 		if err := q.ResetRoomStatus(ctx); err != nil {
 			return err
 		}
+		if err := q.ResetGuests(ctx); err != nil {
+			return err
+		}
 		return q.ResetSockets(ctx)
 	})
 }

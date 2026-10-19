@@ -15,7 +15,9 @@ INSERT INTO caro_room_players (id,room_id,display_name,socket_id,player_role,cre
 -- name: DeleteExpired :execrows
 DELETE FROM caro_rooms WHERE expires_at<=sqlc.arg(cutoff);
 -- name: ResetRoomStatus :exec
-UPDATE caro_rooms SET status='FINISHED' WHERE EXISTS (SELECT 1 FROM caro_room_players p WHERE p.room_id=caro_rooms.id AND p.socket_id IS NOT NULL);
+UPDATE caro_rooms SET status='WAITING' WHERE status='PLAYING';
+-- name: ResetGuests :exec
+DELETE FROM caro_room_players WHERE player_role='PLAYER_2' AND room_id IN (SELECT id FROM caro_rooms WHERE status='WAITING');
 -- name: ResetSockets :exec
 UPDATE caro_room_players SET socket_id=NULL WHERE socket_id IS NOT NULL;
 -- name: CountParticipantRooms :one
