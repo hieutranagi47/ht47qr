@@ -90,7 +90,8 @@
   $('lobby').hidden = true; $('room').hidden = false;
   let code;
   try { code = decodeURIComponent(match[1]).trim().toUpperCase(); } catch { code = ''; }
-  let room, starting = false;
+  let room, starting = false, roomRetry;
+  window.addEventListener('pagehide', () => clearTimeout(roomRetry), { once: true });
   const reservation = storage.get('host:' + code);
   $('copy-link').onclick = async () => {
     try { await navigator.clipboard.writeText(location.origin + '/caro/boards/' + encodeURIComponent(code)); $('room-status').textContent = 'Invite link copied.'; }
@@ -102,7 +103,16 @@
       room = await request('/api/v1/rooms/' + code);
       $('room-title').textContent = 'Board ' + room.code;
       $('room-description').textContent = `Best of ${room.maxGames} · ${room.roomType.toLowerCase()} · ${room.occupancy}/2 seats reserved`;
-      if (room.status === 'FINISHED' || (!reservation && !room.joinable)) throw new Error('This room is full or finished. Return to rooms to find another board.');
+      if (room.status === 'FINISHED') throw new Error('This room is finished. Return to rooms to find another board.');
+      if (!reservation && !room.joinable) {
+        $('room-status').textContent = 'This room is full. Waiting for an open seat…';
+        $('enter-button').disabled = true;
+        // A refreshed page can load before its previous socket has disconnected.
+        roomRetry = setTimeout(() => { if (!starting) loadRoom(); }, 1000);
+        return;
+      }
+      $('room-status').textContent = '';
+      $('enter-button').disabled = false;
       if (reservation) {
         $('guest-name').required = false; $('guest-name').parentElement.hidden = true;
         $('enter-button').textContent = 'Open your board ↗';
@@ -113,6 +123,7 @@
     event.preventDefault(); if (starting || !room) return;
     const displayName = $('guest-name').value.trim();
     if (!reservation && !displayName) { $('room-status').textContent = 'Enter your name.'; return; }
+    clearTimeout(roomRetry);
     starting = true; $('enter-button').disabled = true; $('room-status').textContent = 'Loading game…';
     try {
       storage.set('name', displayName || name);

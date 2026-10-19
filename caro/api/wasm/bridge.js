@@ -31,8 +31,8 @@ window.caroBridge = {
         if (typeof event.data !== 'string' || event.data.length > 2048) { fail('Invalid peer message'); return; }
         try { emit('message', JSON.parse(event.data)); } catch { fail('Invalid peer message'); }
       };
-      channel.onclose = () => fail('Peer connection closed. Create a new room to play again.');
-      channel.onerror = () => fail('Peer connection failed. Create a new room to play again.');
+      channel.onclose = () => fail('Peer connection closed. Rejoin this room to play again.');
+      channel.onerror = () => fail('Peer connection failed. Rejoin this room to play again.');
     };
     const peer = () => {
       if (pc) return pc;
@@ -55,14 +55,14 @@ window.caroBridge = {
           // During admission, the existing setup deadline bounds this wait.
           if (channelOpened && !disconnectTimeout) {
             status('Connection interrupted. Waiting for your opponent…');
-            disconnectTimeout = setTimeout(() => fail('Peer disconnected. Create a new room to play again.'), 10000);
+            disconnectTimeout = setTimeout(() => fail('Peer disconnected. Rejoin this room to play again.'), 10000);
           }
         } else if (state === 'failed') {
           fail(channelOpened
-            ? 'Peer connection failed. Create a new room to play again.'
+            ? 'Peer connection failed. Rejoin this room to play again.'
             : 'Could not connect to the other player. This network may require a TURN relay.');
         } else if (state === 'closed') {
-          fail('Peer connection closed. Create a new room to play again.');
+          fail('Peer connection closed. Rejoin this room to play again.');
         }
       };
       timeout = setTimeout(() => fail('Could not connect to the other player. This network may require a TURN relay.'), 30000);
@@ -116,20 +116,20 @@ window.caroBridge = {
     }));
     socket.on('room_error', error => fail(error.message || 'Room unavailable'));
     // A cold deployment can serve HTTP before signaling recovery has completed.
-    // Retry only the initial handshake: reconnecting an admitted player can finish a match.
+    // Retry only the initial handshake; rejoining starts a fresh match.
     socket.on('connect_error', () => {
       if (closed) return;
-      if (connected) { fail('Signaling disconnected. Create a new room to play again.'); return; }
+      if (connected) { fail('Signaling disconnected. Rejoin this room to play again.'); return; }
       clearTimeout(retry);
       retry = setTimeout(() => { if (!closed) socket.connect(); }, retryDelay);
       retryDelay = Math.min(retryDelay * 2, 2000);
     });
-    socket.on('peer_disconnected', () => fail('Opponent left. Create a new room to play again.'));
+    socket.on('peer_disconnected', () => fail('Opponent left. Rejoin this room to play again.'));
     socket.on('disconnect', reason => {
       if (closed) return;
       // Do not log room credentials, signal payloads or raw transport errors.
       console.warn('Caro signaling disconnected', { reason, transport: socket.io.engine?.transport.name });
-      fail('Signaling disconnected. Create a new room to play again.');
+      fail('Signaling disconnected. Rejoin this room to play again.');
     });
     function cleanup() {
       if (closed) return;

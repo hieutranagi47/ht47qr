@@ -117,12 +117,13 @@ at 64 KiB; binary events are unsupported. Do not send credentials in URLs.
 - `leave_room { code }` and transport disconnect share idempotent departure.
   The remaining peer receives `peer_disconnected { code }` after commit.
 
-While WAITING, a disconnected host is unbound but retains its reservation and
-may reconnect with its token once the old socket disconnects. A guest departure
-removes its slot. Guests have no reconnect credential. Once PLAYING, either
-player's departure makes the room FINISHED; it never reopens. Finished rooms
-remain readable until expiry but cannot join or relay. Clients create a new room
-after a terminal disconnect. A delayed old disconnect cannot remove a new socket.
+A disconnected host is unbound but retains its reservation and may reconnect
+with its token once the old socket disconnects. A guest departure removes its
+slot. Guests have no reconnect credential and rejoin using their display name.
+Either player's departure returns a PLAYING room to WAITING, including before
+readiness is confirmed. The current peer match stops; players can reopen the
+same room URL for a fresh match until its original expiry. A delayed old
+disconnect cannot remove a new socket. Finished rooms cannot join or relay.
 
 ## Lifecycle and deployment
 
@@ -148,11 +149,14 @@ During peer setup, the original 30-second connection deadline remains in force;
 after the data channel opens, a disconnect has 10 seconds to recover. Repeated
 state notifications do not extend that window. A recovered connection preserves
 the existing data channel and match. Failed/closed peer connections, closed data
-channels, signaling loss, and explicit opponent departures remain terminal.
+channels, signaling loss, and explicit opponent departures stop the current
+match. Players can rejoin the same room to begin a fresh match. The room page
+rechecks a full room while the previous connection is being released.
 Initial peer failures report that the network may require a TURN relay; a grace
 period cannot make a STUN-only deployment work on networks that block direct P2P.
 
-Run the bridge retry/lifecycle tests with `node --test tests/testdata/caro_bridge.test.cjs`.
+Run the room admission and bridge lifecycle tests with
+`node --test tests/testdata/caro_app.test.cjs tests/testdata/caro_bridge.test.cjs`.
 
 `Service.Run` owns transport shutdown and cleanup. Embedded users must run
 `Service.RunBackground(ctx)` alongside `HTTPHandler()`. Cancellation stops new

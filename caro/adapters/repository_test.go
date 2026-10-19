@@ -128,9 +128,10 @@ func TestRoomTransactions(t *testing.T) {
 		require.NoError(t, err)
 		stored, err = s.Get(ctx, code)
 		require.NoError(t, err)
-		require.Equal(t, domain.Finished, stored.Status())
+		require.Equal(t, domain.Waiting, stored.Status())
+		require.True(t, stored.Joinable(now))
 		_, err = s.Join(ctx, code, "New", "new", "", "198.51.100.99")
-		require.ErrorIs(t, err, domain.ErrUnavailable)
+		require.NoError(t, err)
 		now = now.Add(24 * time.Hour)
 		_, err = s.Get(ctx, code)
 		require.ErrorIs(t, err, app.ErrNotFound)
@@ -253,8 +254,7 @@ func TestOwnerRoomLimits(t *testing.T) {
 		require.NoError(t, err)
 		_, err = s.Leave(ctx, rooms[0].Room.Code(), "guest-0")
 		require.NoError(t, err)
-		_, err = s.Create(ctx, newRequest(input))
-		require.NoError(t, err)
+		// Reopening the room retains its owner's quota slot.
 		_, err = s.Create(ctx, newRequest(input))
 		require.ErrorIs(t, err, domain.ErrWaitingRoomLimit)
 		// Expiry releases all slots without physical deletion.

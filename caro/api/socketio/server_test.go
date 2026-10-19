@@ -236,7 +236,8 @@ func TestSocketIOLeaveReconnectAndOrigin(t *testing.T) {
 	require.True(t, guest.emit(t, "leave_room", map[string]any{"code": code}))
 	require.NotEmpty(t, replacement.event(t, "peer_disconnected"))
 	require.True(t, guest.emit(t, "leave_room", map[string]any{"code": code}))
-	require.False(t, guest.emit(t, "join_room", map[string]any{"code": code, "displayName": "Bob"}))
+	require.True(t, guest.emit(t, "join_room", map[string]any{"code": code, "displayName": "Bob"}))
+	require.NotEmpty(t, replacement.event(t, "peer_joined"))
 	url := "ws" + strings.TrimPrefix(f.server.URL, "http") + socketio.Path + "?EIO=4&transport=websocket"
 	_, response, err := websocket.DefaultDialer.Dial(url, map[string][]string{"Origin": {"https://evil.example"}})
 	require.Error(t, err)
@@ -289,4 +290,47 @@ func TestSocketIOGuestIPRoomLimit(t *testing.T) {
 	require.Contains(t, string(b.event(t, "room_error")), "waiting_room_limit_reached")
 	require.True(t, a.emit(t, "leave_room", map[string]any{"code": first.Room.Code()}))
 	require.True(t, b.emit(t, "join_room", map[string]any{"code": second.Room.Code(), "displayName": "Guest"}))
+}
+
+// Refresh replaces both transport sockets without sending a leave_room event.
+func TestSocketIOBothPlayersRefreshAndRejoin(t *testing.T) {
+	for _, hostFirst := range []bool{true, false} {
+		t.Run(fmt.Sprintf("host_first_%t", hostFirst), func(t *testing.T) {
+			f := setup(t)
+			ctx := context.Background()
+			created, err := f.service.Create(ctx, app.CreateInput{IdempotencyKey: uuid.NewString(), DisplayName: "Alice", RoomType: "PUBLIC", MaxGames: 3, OwnerIP: "192.0.2.1"})
+			require.NoError(t, err)
+			code := created.Room.Code()
+			host, guest := connect(t, f), connect(t, f)
+			require.True(t, host.emit(t, "join_room", map[string]any{"code": code, "hostToken": created.HostToken}))
+			require.True(t, guest.emit(t, "join_room", map[string]any{"code": code, "displayName": "Bob"}))
+			host.conn.Close()
+			guest.conn.Close()
+			require.Eventually(t, func() bool {
+				r, err := f.service.Get(ctx, code)
+				return err == nil && r.Status() == domain.Waiting && len(r.Players()) == 1 && r.Players()[0].Socket() == ""
+			}, time.Second, 10*time.Millisecond)
+			newHost, newGuest := connect(t, f), connect(t, f)
+			joinHost := func() {
+				require.True(t, newHost.emit(t, "join_room", map[string]any{"code": code, "hostToken": created.HostToken}))
+			}
+			joinGuest := func() {
+				require.True(t, newGuest.emit(t, "join_room", map[string]any{"code": code, "displayName": "Bob"}))
+			}
+			if hostFirst {
+				joinHost()
+				joinGuest()
+			} else {
+				joinGuest()
+				joinHost()
+			}
+			require.NotEmpty(t, newHost.event(t, "peer_joined"))
+			r, err := f.service.Get(ctx, code)
+			require.NoError(t, err)
+			require.Equal(t, domain.Playing, r.Status())
+			require.Equal(t, created.Room.ExpiresAt(), r.ExpiresAt())
+			require.True(t, newHost.emit(t, "signal_offer", map[string]any{"code": code, "data": map[string]any{"type": "offer", "sdp": "fresh-offer"}}))
+			require.NotEmpty(t, newGuest.event(t, "signal_offer"))
+		})
+	}
 }

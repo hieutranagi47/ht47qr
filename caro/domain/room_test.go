@@ -62,9 +62,10 @@ func TestMembershipPolicy(t *testing.T) {
 	require.False(t, r.Leave("old"))
 	require.True(t, r.Leave("guest"))
 	require.False(t, r.Leave("guest"))
-	require.Equal(t, Finished, r.Status())
+	require.Equal(t, Waiting, r.Status())
 	_, _, err = r.Join("g", "Bob", "new", "", now, "198.51.100.99")
-	require.ErrorIs(t, err, ErrUnavailable)
+	require.NoError(t, err)
+	require.Equal(t, Playing, r.Status())
 }
 
 func TestWaitingHostReconnect(t *testing.T) {
@@ -99,4 +100,23 @@ func TestIPNormalizationAndRoomLimits(t *testing.T) {
 	require.NoError(t, CheckRoomLimit(Playing, 49))
 	require.NoError(t, CheckRoomLimit(Playing, 0))
 	require.NoError(t, CheckRoomLimit(Finished, 10))
+}
+
+func TestConnectedHostReconnect(t *testing.T) {
+	now := time.Now()
+	host, _ := RestorePlayer("host", "A", "", Host, HashCredential("token"), now, "192.0.2.1")
+	r, _ := NewRoom("room", "ABC234", "PUBLIC", 1, host, now, "192.0.2.1")
+	_, _, err := r.Join("h", "", "old-host", "token", now, "192.0.2.1")
+	require.NoError(t, err)
+	_, _, err = r.Join("g", "Guest", "guest", "", now, "192.0.2.2")
+	require.NoError(t, err)
+	require.True(t, r.Leave("old-host"))
+	require.Equal(t, Waiting, r.Status())
+	_, _, err = r.Join("h", "", "new-host", "wrong", now, "192.0.2.1")
+	require.ErrorIs(t, err, ErrUnauthorized)
+	_, _, err = r.Join("h", "", "new-host", "token", now, "192.0.2.1")
+	require.NoError(t, err)
+	require.Equal(t, Playing, r.Status())
+	require.False(t, r.Leave("old-host"))
+	require.Equal(t, Playing, r.Status())
 }

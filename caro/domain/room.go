@@ -229,12 +229,12 @@ func (r *Room) startIfReady() {
 	}
 }
 
-// A playing departure is terminal. Waiting hosts retain their private reservation.
+// Leave reopens the room for a fresh match. Hosts retain their private reservation.
 func (r *Room) Leave(socket string) bool {
 	for i, p := range r.players {
 		if socket != "" && p.socket == socket {
 			if r.status == Playing {
-				r.status = Finished
+				r.status = Waiting
 			}
 			if p.role == Host {
 				r.players[i].socket = ""
