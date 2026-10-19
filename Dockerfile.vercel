@@ -66,6 +66,9 @@ ENV PORT=80 \
     GODEBUG=madvdontneed=1,netdns=go,gctrace=1,schedtrace=1000 \
     TZ=Asia/Ho_Chi_Minh
 
+ENV CARO_TURN_URLS=turn:${CARO_TURN_HOST:-free.expressturn.com:3478}?transport=tcp,turn:${CARO_TURN_HOST:-free.expressturn.com:3478}?transport=udp \
+    CARO_TURN_SECRET= \
+    CARO_ICE_TRANSPORT_POLICY=
 # Supply DATABASE_URL (or POSTGRES_URL) through Vercel runtime environment settings.
 # Optionally set DATABASE_URL_UNPOOLED (or POSTGRES_URL_NON_POOLING) for migrations.
 # Never bake database credentials into the image.

@@ -266,7 +266,7 @@ func checkParticipantLimits(ctx context.Context, q *dbmodels.Queries, room domai
 		return nil
 	}
 	for _, ip := range room.ParticipantIPs() {
-		count, err := q.CountParticipantRooms(ctx, dbmodels.CountParticipantRoomsParams{Ip: pgtype.Text{String: ip, Valid: ip != ""}, Status: room.Status(), Cutoff: stamp(now), ExcludeID: room.ID()})
+		count, err := q.CountParticipantRooms(ctx, dbmodels.CountParticipantRoomsParams{Ip: pgtype.Text{String: ip, Valid: ip != ""}, Cutoff: stamp(now), ExcludeID: room.ID()})
 		if err != nil {
 			return err
 		}

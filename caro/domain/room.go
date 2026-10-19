@@ -257,9 +257,12 @@ func NormalizeIP(value string) (string, error) {
 }
 func (r Room) OwnerIP() string { return r.ownerIP }
 
-// CheckRoomLimit counts other unexpired rooms owned or joined by the same IP and status.
+// MaxRoomsPerIP caps the combined waiting and playing rooms for each IP.
+const MaxRoomsPerIP = 50
+
+// CheckRoomLimit checks other unexpired rooms owned or joined by the same IP.
 func CheckRoomLimit(status string, count int64) error {
-	if count < 1 {
+	if count < MaxRoomsPerIP {
 		return nil
 	}
 	switch status {

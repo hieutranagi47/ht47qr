@@ -20,6 +20,9 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
 	"htqrcode"
+	"htqrcode/caro/adapters/db"
+	"htqrcode/caro/app"
+	"htqrcode/caro/domain"
 )
 
 func TestCaroRESTComponent(t *testing.T) {
@@ -251,6 +254,13 @@ func TestCaroOwnerIPQuotaHTTP(t *testing.T) {
 	body := `{"displayName":"Alice","roomType":"PUBLIC","maxGames":1}`
 	first := create("192.0.2.1:1234", "198.51.100.1", body)
 	require.Equal(t, 201, first.Code, first.Body.String())
+	// Fill the quota through the service so the HTTP rate limiter does not
+	// intercept requests before the room quota is reached.
+	rooms := app.NewService(db.NewRepository(pool), time.Now, domain.RandomCode)
+	for range domain.MaxRoomsPerIP - 1 {
+		_, err := rooms.Create(context.Background(), app.CreateInput{DisplayName: "Alice", RoomType: "PUBLIC", MaxGames: 1, OwnerIP: "192.0.2.1", IdempotencyKey: uuid.NewString()})
+		require.NoError(t, err)
+	}
 	duplicate := create("192.0.2.1:5678", "198.51.100.2", body)
 	require.Equal(t, 409, duplicate.Code)
 	require.Contains(t, duplicate.Body.String(), "waiting_room_limit_reached")

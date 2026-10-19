@@ -10,13 +10,16 @@ function setup() {
   let now = 0, nextID = 0, options, connects = 0, disconnects = 0;
   const timers = new Map(), handlers = new Map(), pageEvents = new Map();
   const notifications = [], statuses = [], sent = [], warnings = [];
-  const channels = [];
+  const channels = [], peers = [];
   class PeerConnection {
+    constructor() { this.connectionState = 'new'; peers.push(this); }
     createDataChannel() {
       const channel = { readyState: 'connecting', bufferedAmount: 0, close() {} };
       channels.push(channel);
       return channel;
     }
+    async setRemoteDescription(value) { this.remoteDescription = value; }
+    async createAnswer() { return { type: 'answer', sdp: 'test-answer' }; }
     async createOffer() { return { type: 'offer', sdp: 'test-offer' }; }
     async setLocalDescription(value) { this.localDescription = value; }
     close() {}
@@ -45,7 +48,7 @@ function setup() {
   });
   const bridge = window.caroBridge.connect((type, data) => type === 'status' ? statuses.push(data) : notifications.push({ type, data }));
   return {
-    bridge, notifications, statuses, sent, warnings, options, channels,
+    bridge, notifications, statuses, sent, warnings, options, channels, peers,
     get connects() { return connects; },
     get disconnects() { return disconnects; },
     get pendingTimers() { return timers.size; },
@@ -163,6 +166,7 @@ test('peer setup reports its stage and stops a stalled data channel', async () =
   f.fire('peer_joined', { code: 'ABC234' });
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(f.statuses.at(-1), 'Connecting to your opponent…');
+  assert.equal(f.notifications.at(-1).type, 'peer_joined', 'stop bot play before WebRTC opens');
   assert.equal(f.sent.at(-1).event, 'signal_offer');
   assert.equal(f.channels.length, 1);
   f.tick(30000);
@@ -182,5 +186,115 @@ test('an open data channel clears the peer setup deadline', async () => {
   f.tick(60000);
   assert.equal(f.notifications.at(-1).type, 'open');
   assert.equal(f.disconnects, 0);
+  assert.equal(f.pendingTimers, 0);
+});
+
+
+test('an incoming host offer stops guest bot play before opening WebRTC', async () => {
+  const f = setup();
+  f.fire('connect');
+  f.fire('room_joined', { code: 'ABC234', role: 'PLAYER_2' });
+  f.fire('signal_offer', { code: 'ABC234', data: { type: 'offer', sdp: 'host-offer' } });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(f.notifications.at(-1).type, 'peer_joined');
+  assert.equal(f.sent.at(-1).event, 'signal_answer');
+  f.bridge.close();
+});
+
+async function joinPeers(role = 'PLAYER_1') {
+  const f = setup();
+  f.fire('connect');
+  f.fire('room_joined', { code: 'ABC234', role });
+  if (role === 'PLAYER_1') f.fire('peer_joined', { code: 'ABC234' });
+  else f.fire('signal_offer', { code: 'ABC234', data: { type: 'offer', sdp: 'host-offer' } });
+  await new Promise(resolve => setImmediate(resolve));
+  if (role === 'PLAYER_2') f.peers[0].ondatachannel({ channel: f.peers[0].createDataChannel() });
+  f.state = value => {
+    f.peers[0].connectionState = value;
+    f.peers[0].onconnectionstatechange?.();
+  };
+  return f;
+}
+
+test('a transient disconnect during host or guest admission keeps signaling alive', async () => {
+  for (const role of ['PLAYER_1', 'PLAYER_2']) {
+    const f = await joinPeers(role);
+    f.state('disconnected');
+    f.tick(15000);
+    assert.equal(f.disconnects, 0);
+    assert.equal(f.notifications.some(event => event.type === 'error'), false);
+    f.state('connecting');
+    f.state('connected');
+    f.channels[0].onopen();
+    f.tick(60000);
+    assert.equal(f.notifications.at(-1).type, 'open');
+    assert.equal(f.disconnects, 0);
+    assert.equal(f.pendingTimers, 0);
+    f.bridge.close();
+  }
+});
+
+test('an admission disconnect still respects the original peer setup deadline', async () => {
+  const f = await joinPeers();
+  f.tick(20000);
+  f.state('disconnected');
+  f.tick(9999);
+  assert.equal(f.disconnects, 0);
+  f.tick(1);
+  assert.match(f.notifications.at(-1).data, /TURN relay/);
+  assert.equal(f.disconnects, 1);
+  assert.equal(f.pendingTimers, 0);
+});
+
+test('an established peer can recover without reopening or disconnecting the room', async () => {
+  const f = await joinPeers();
+  f.channels[0].onopen();
+  f.state('disconnected');
+  f.tick(9999);
+  assert.equal(f.disconnects, 0);
+  f.state('connecting');
+  f.state('connected');
+  f.tick(60000);
+  assert.equal(f.disconnects, 0);
+  assert.equal(f.pendingTimers, 0);
+  assert.equal(f.notifications.filter(event => event.type === 'open').length, 1);
+  assert.equal(f.notifications.some(event => event.type === 'error'), false);
+  assert.equal(f.statuses.at(-1), 'Connection restored.');
+  f.bridge.close();
+});
+
+test('repeated disconnect notifications cannot extend the recovery deadline', async () => {
+  const f = await joinPeers();
+  f.channels[0].onopen();
+  f.state('disconnected');
+  f.tick(5000);
+  f.state('disconnected');
+  f.tick(5000);
+  assert.match(f.notifications.at(-1).data, /Peer disconnected/);
+  assert.equal(f.disconnects, 1);
+  assert.equal(f.pendingTimers, 0);
+});
+
+test('terminal failures and leaving cancel any pending peer recovery', async () => {
+  for (const action of ['failed', 'closed', 'peer_disconnected', 'close']) {
+    const f = await joinPeers();
+    f.channels[0].onopen();
+    f.state('disconnected');
+    if (action === 'close') f.bridge.close();
+    else if (action === 'peer_disconnected') f.fire(action);
+    else f.state(action);
+    assert.equal(f.disconnects, 1);
+    assert.equal(f.pendingTimers, 0);
+    const count = f.notifications.length;
+    f.tick(60000);
+    assert.equal(f.notifications.length, count);
+  }
+});
+
+test('failed initial connectivity explains the possible relay requirement', async () => {
+  const f = await joinPeers();
+  f.state('failed');
+  assert.match(f.notifications.at(-1).data, /TURN relay/);
+  assert.equal(f.disconnects, 1);
   assert.equal(f.pendingTimers, 0);
 });

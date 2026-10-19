@@ -21,6 +21,6 @@ UPDATE caro.room_players SET socket_id=NULL WHERE socket_id IS NOT NULL;
 -- name: LockRoom :one
 SELECT * FROM caro.rooms WHERE code=sqlc.arg(code) FOR UPDATE;
 -- name: CountParticipantRooms :one
-SELECT count(*) FROM caro.rooms r WHERE r.status=sqlc.arg(status) AND r.expires_at>sqlc.arg(cutoff) AND r.id<>sqlc.arg(exclude_id) AND (r.owner_ip=sqlc.arg(ip) OR EXISTS (SELECT 1 FROM caro.room_players p WHERE p.room_id=r.id AND p.participant_ip=sqlc.arg(ip)));
+SELECT count(*) FROM caro.rooms r WHERE r.status IN ('WAITING','PLAYING') AND r.expires_at>sqlc.arg(cutoff) AND r.id<>sqlc.arg(exclude_id) AND (r.owner_ip=sqlc.arg(ip) OR EXISTS (SELECT 1 FROM caro.room_players p WHERE p.room_id=r.id AND p.participant_ip=sqlc.arg(ip)));
 -- name: RoomByCreationKey :one
 SELECT * FROM caro.rooms WHERE owner_ip=sqlc.arg(owner_ip) AND idempotency_key_hash=sqlc.arg(idempotency_key_hash);

@@ -93,8 +93,10 @@ func TestIPNormalizationAndRoomLimits(t *testing.T) {
 		_, err := NormalizeIP(input)
 		require.ErrorIs(t, err, ErrInvalid)
 	}
-	require.ErrorIs(t, CheckRoomLimit(Waiting, 1), ErrWaitingRoomLimit)
-	require.ErrorIs(t, CheckRoomLimit(Playing, 1), ErrActiveRoomLimit)
+	require.ErrorIs(t, CheckRoomLimit(Waiting, 50), ErrWaitingRoomLimit)
+	require.ErrorIs(t, CheckRoomLimit(Playing, 50), ErrActiveRoomLimit)
+	require.NoError(t, CheckRoomLimit(Waiting, 49))
+	require.NoError(t, CheckRoomLimit(Playing, 49))
 	require.NoError(t, CheckRoomLimit(Playing, 0))
 	require.NoError(t, CheckRoomLimit(Finished, 10))
 }

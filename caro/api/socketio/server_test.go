@@ -244,7 +244,7 @@ func TestSocketIOLeaveReconnectAndOrigin(t *testing.T) {
 	response.Body.Close()
 }
 
-func TestSocketIOOwnerActiveRoomLimit(t *testing.T) {
+func TestSocketIOMultipleActiveRoomsPerIP(t *testing.T) {
 	f := setup(t)
 	ctx := context.Background()
 	input := app.CreateInput{IdempotencyKey: uuid.NewString(), DisplayName: "Host", RoomType: "PUBLIC", MaxGames: 1, OwnerIP: "192.0.2.1"}
@@ -260,24 +260,24 @@ func TestSocketIOOwnerActiveRoomLimit(t *testing.T) {
 	waitingHost := connect(t, f)
 	waitingGuest := connect(t, f)
 	require.True(t, waitingHost.emit(t, "join_room", map[string]any{"code": waiting.Room.Code(), "hostToken": waiting.HostToken}))
-	require.False(t, waitingGuest.emit(t, "join_room", map[string]any{"code": waiting.Room.Code(), "displayName": "Next guest"}))
-	require.Contains(t, string(waitingGuest.event(t, "room_error")), "active_room_limit_reached")
+	require.True(t, waitingGuest.emit(t, "join_room", map[string]any{"code": waiting.Room.Code(), "displayName": "Next guest"}))
 	stored, err := f.service.Get(ctx, waiting.Room.Code())
 	require.NoError(t, err)
-	require.Equal(t, domain.Waiting, stored.Status())
-	require.Len(t, stored.Players(), 1)
-	require.True(t, guest.emit(t, "leave_room", map[string]any{"code": active.Room.Code()}))
-	require.True(t, waitingGuest.emit(t, "join_room", map[string]any{"code": waiting.Room.Code(), "displayName": "Next guest"}))
+	require.Equal(t, domain.Playing, stored.Status())
+	require.Len(t, stored.Players(), 2)
 	require.NotEmpty(t, waitingHost.event(t, "peer_joined"))
 }
 
-func TestSocketIOGuestIPCannotJoinTwoWaitingRooms(t *testing.T) {
+func TestSocketIOGuestIPRoomLimit(t *testing.T) {
 	f := setup(t)
 	ctx := context.Background()
 	create := func(ip string) app.Created {
 		r, err := f.service.Create(ctx, app.CreateInput{DisplayName: "Host", RoomType: "PUBLIC", MaxGames: 1, OwnerIP: ip, IdempotencyKey: uuid.NewString()})
 		require.NoError(t, err)
 		return r
+	}
+	for range domain.MaxRoomsPerIP - 1 {
+		create("127.0.0.1")
 	}
 	first := create("192.0.2.1")
 	second := create("192.0.2.2")

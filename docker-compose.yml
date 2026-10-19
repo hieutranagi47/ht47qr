@@ -6,6 +6,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      turn:
+        condition: service_started
     stop_grace_period: 20s
     environment:
       # Giới hạn Concurrency (Xử lý đồng thời) và CPU
@@ -14,6 +16,10 @@ services:
       GOMEMLIMIT: "900MiB" # ~ 90% of the RAM. Đặt giới hạn mềm cho tổng lượng bộ nhớ mà Go Runtime được phép dùng. Khi bộ nhớ chạm ngưỡng này, bộ thu gom rác (Garbage Collector - GC) sẽ bị kích hoạt liên tục và quyết liệt hơn để giải phóng RAM, cố gắng không để container vượt quá giới hạn và bị Docker Kill.
       GOGC: "90" # Xác định tỷ lệ phần trăm tăng trưởng của bộ nhớ heap trước khi đợt thu gom rác tiếp theo được kích hoạt (mặc định là 100).
       TZ: Asia/Ho_Chi_Minh
+      # Force TURN locally so a successful game proves the relay works.
+      CARO_TURN_URLS: "turn:${CARO_TURN_HOST:-127.0.0.1}:3478?transport=tcp,turn:${CARO_TURN_HOST:-127.0.0.1}:3478?transport=udp"
+      CARO_TURN_SECRET: "${CARO_TURN_SECRET:-caro-local-development-only}"
+      CARO_ICE_TRANSPORT_POLICY: "${CARO_ICE_TRANSPORT_POLICY:-relay}"
       # Container listeners are fixed; SERVER_PORT below selects the host port.
       SERVER_PORT: "8080"
       DATABASE_BACKEND: postgres
@@ -91,6 +97,32 @@ services:
       - "${SERVER_SSE_PORT_TLS:-8446}:8446"
     volumes:
       - htqrcode-data:/app/data
+
+  # Local development relay; use runtime-issued credentials in the browser.
+  turn:
+    image: coturn/coturn:4.18.0-r0-alpine
+    # Pass arguments literally (the image's wrapper evaluates them with a shell).
+    entrypoint: ["turnserver"]
+    command:
+      - -n
+      - --log-file=stdout
+      - --listening-ip=0.0.0.0
+      # Keep the container's real relay address: both relay-only clients reach
+      # it through TURN. Browsers reject 127.0.0.1 as a remote ICE candidate.
+      - --listening-port=3478
+      - --min-port=49160
+      - --max-port=49200
+      - --realm=caro.local
+      - --use-auth-secret
+      - --static-auth-secret=${CARO_TURN_SECRET:-caro-local-development-only}
+      - --fingerprint
+      - --no-tls
+      - --no-cli
+      - --no-multicast-peers
+    ports:
+      - "${CARO_TURN_HOST:-127.0.0.1}:3478:3478/tcp"
+      - "${CARO_TURN_HOST:-127.0.0.1}:3478:3478/udp"
+      - "${CARO_TURN_HOST:-127.0.0.1}:49160-49200:49160-49200/udp"
 
   postgres:
     image: postgres:17-alpine

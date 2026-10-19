@@ -16,7 +16,7 @@ paths:
             format: uuid
       description: >-
         Create a room for the server-resolved client IP. Each IP may create or
-        participate in one unexpired WAITING room and one unexpired PLAYING room.
+        participate in at most 50 unexpired rooms in total across WAITING and PLAYING.
         A conflicting WAITING membership returns 409 with slug waiting_room_limit_reached.
         Idempotency-Key is a private UUIDv4; reuse it with the same inputs and IP
         after interruption to retrieve the exact original room and host credential.

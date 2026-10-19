@@ -21,9 +21,9 @@ func PublicError(err error) error {
 	case errors.Is(err, app.ErrIdempotencyExpired):
 		return common.NewExpiredError("idempotency_expired", "the original room has expired; create a new room with a new key")
 	case errors.Is(err, domain.ErrWaitingRoomLimit):
-		return common.NewConflictError("waiting_room_limit_reached", "an involved IP already has a waiting room")
+		return common.NewConflictError("waiting_room_limit_reached", "an involved IP has reached the limit of 50 waiting or active rooms")
 	case errors.Is(err, domain.ErrActiveRoomLimit):
-		return common.NewConflictError("active_room_limit_reached", "an involved IP already has an active room")
+		return common.NewConflictError("active_room_limit_reached", "an involved IP has reached the limit of 50 waiting or active rooms")
 	case errors.Is(err, domain.ErrFull):
 		return common.NewConflictError("room_full", "room is full")
 	case errors.Is(err, app.ErrMembershipConflict):

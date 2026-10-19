@@ -226,44 +226,38 @@ func TestOwnerRoomLimits(t *testing.T) {
 		ctx := context.Background()
 		now := time.Now().UTC().Truncate(time.Microsecond)
 		s := app.NewService(repo, func() time.Time { return now }, domain.RandomCode)
-		input := app.CreateInput{IdempotencyKey: uuid.NewString(), DisplayName: "Owner", RoomType: "PUBLIC", MaxGames: 3, OwnerIP: "::ffff:192.0.2.10"}
-		active, err := s.Create(ctx, newRequest(input))
-		require.NoError(t, err)
-		require.Equal(t, "192.0.2.10", active.Room.OwnerIP())
+		input := app.CreateInput{DisplayName: "Owner", RoomType: "PUBLIC", MaxGames: 3, OwnerIP: "::ffff:192.0.2.10"}
+		rooms := make([]app.Created, domain.MaxRoomsPerIP)
+		for i := range rooms {
+			r, err := s.Create(ctx, newRequest(input))
+			require.NoError(t, err)
+			require.Equal(t, "192.0.2.10", r.Room.OwnerIP())
+			rooms[i] = r
+		}
 		input.OwnerIP = "192.0.2.10"
-		_, err = s.Create(ctx, newRequest(input))
+		_, err := s.Create(ctx, newRequest(input))
 		require.ErrorIs(t, err, domain.ErrWaitingRoomLimit)
+		// A room counts once even with owner, host and guest sharing an IP.
+		for i, r := range rooms {
+			_, err = s.Join(ctx, r.Room.Code(), "", fmt.Sprintf("host-%d", i), r.HostToken, input.OwnerIP)
+			require.NoError(t, err)
+			_, err = s.Join(ctx, r.Room.Code(), "Guest", fmt.Sprintf("guest-%d", i), "", input.OwnerIP)
+			require.NoError(t, err)
+			// Transitioning to PLAYING does not free a slot or consume another one.
+			_, err = s.Create(ctx, newRequest(input))
+			require.ErrorIs(t, err, domain.ErrWaitingRoomLimit)
+		}
 		other := input
 		other.OwnerIP = "192.0.2.11"
-		_, err = s.Create(ctx, other)
+		_, err = s.Create(ctx, newRequest(other))
 		require.NoError(t, err)
-		_, err = s.Join(ctx, active.Room.Code(), "", "host-1", active.HostToken, "198.51.100.99")
+		_, err = s.Leave(ctx, rooms[0].Room.Code(), "guest-0")
 		require.NoError(t, err)
-		_, err = s.Join(ctx, active.Room.Code(), "Guest", "guest-1", "", "198.51.100.99")
-		require.NoError(t, err)
-		waiting, err := s.Create(ctx, newRequest(input))
+		_, err = s.Create(ctx, newRequest(input))
 		require.NoError(t, err)
 		_, err = s.Create(ctx, newRequest(input))
 		require.ErrorIs(t, err, domain.ErrWaitingRoomLimit)
-		_, err = s.Join(ctx, waiting.Room.Code(), "", "host-2", waiting.HostToken, "198.51.100.99")
-		require.NoError(t, err)
-		_, err = s.Join(ctx, waiting.Room.Code(), "Guest", "guest-2", "", "198.51.100.99")
-		require.ErrorIs(t, err, domain.ErrActiveRoomLimit)
-		unchanged, err := s.Get(ctx, waiting.Room.Code())
-		require.NoError(t, err)
-		require.Equal(t, domain.Waiting, unchanged.Status())
-		require.Len(t, unchanged.Players(), 1)
-		// A rejected start leaves no guest binding behind and does not affect the active room.
-		activeRoom, err := s.Get(ctx, active.Room.Code())
-		require.NoError(t, err)
-		require.Equal(t, domain.Playing, activeRoom.Status())
-		_, err = s.Leave(ctx, active.Room.Code(), "guest-1")
-		require.NoError(t, err)
-		_, err = s.Join(ctx, waiting.Room.Code(), "Guest", "guest-2", "", "198.51.100.99")
-		require.NoError(t, err)
-		_, err = s.Create(ctx, newRequest(input))
-		require.NoError(t, err)
-		// Expiry releases both quotas without waiting for physical deletion.
+		// Expiry releases all slots without physical deletion.
 		now = now.Add(domain.Lifetime)
 		_, err = s.Create(ctx, newRequest(input))
 		require.NoError(t, err)
@@ -273,14 +267,18 @@ func TestOwnerRoomLimits(t *testing.T) {
 func TestConcurrentOwnerCreationLimit(t *testing.T) {
 	testRepositories(t, func(t *testing.T, repo app.Repository) {
 		now := time.Now().UTC().Truncate(time.Microsecond)
-		// Separate application instances must share a persistent quota, not a local mutex.
 		services := []*app.Service{app.NewService(repo, func() time.Time { return now }, domain.RandomCode), app.NewService(repo, func() time.Time { return now }, domain.RandomCode)}
+		input := app.CreateInput{DisplayName: "Owner", RoomType: "PRIVATE", MaxGames: 1, OwnerIP: "2001:db8::1"}
+		for range domain.MaxRoomsPerIP - 1 {
+			_, err := services[0].Create(context.Background(), newRequest(input))
+			require.NoError(t, err)
+		}
 		var wg sync.WaitGroup
 		var successes atomic.Int32
 		failures := make(chan error, 12)
 		for i := range 12 {
 			wg.Go(func() {
-				_, err := services[i%2].Create(context.Background(), app.CreateInput{IdempotencyKey: uuid.NewString(), DisplayName: "Owner", RoomType: "PRIVATE", MaxGames: 1, OwnerIP: "2001:db8::1"})
+				_, err := services[i%2].Create(context.Background(), newRequest(input))
 				if err == nil {
 					successes.Add(1)
 				} else {
@@ -389,35 +387,36 @@ func TestGuestParticipationLimits(t *testing.T) {
 			require.NoError(t, err)
 			return r
 		}
+		const guestIP = "198.51.100.10"
+		for range domain.MaxRoomsPerIP - 1 {
+			create(guestIP)
+		}
 		first := create("192.0.2.1")
 		second := create("192.0.2.2")
-		const guestIP = "198.51.100.10"
 		_, err := s.Join(ctx, first.Room.Code(), "Guest", "guest-1", "", guestIP)
 		require.NoError(t, err)
-		// Waiting guest membership consumes the same quota as a created host reservation.
 		_, err = s.Join(ctx, second.Room.Code(), "Guest", "guest-2", "", guestIP)
 		require.ErrorIs(t, err, domain.ErrWaitingRoomLimit)
-		_, err = s.Create(ctx, app.CreateInput{DisplayName: "Guest", RoomType: "PRIVATE", MaxGames: 1, OwnerIP: guestIP, IdempotencyKey: uuid.NewString()})
-		require.ErrorIs(t, err, domain.ErrWaitingRoomLimit)
-		_, err = s.Join(ctx, first.Room.Code(), "", "host-1", first.HostToken, "192.0.2.1")
-		require.NoError(t, err)
-		// One active room plus one waiting room is allowed for guests too.
-		_, err = s.Join(ctx, second.Room.Code(), "Guest", "guest-2", "", guestIP)
-		require.NoError(t, err)
-		_, err = s.Join(ctx, second.Room.Code(), "", "host-2", second.HostToken, "192.0.2.2")
-		require.ErrorIs(t, err, domain.ErrActiveRoomLimit)
+		// Rejected joins leave no membership behind.
 		stored, err := s.Get(ctx, second.Room.Code())
 		require.NoError(t, err)
-		require.Equal(t, domain.Waiting, stored.Status())
-		require.Empty(t, stored.Players()[0].Socket())
-		_, err = s.Leave(ctx, first.Room.Code(), "guest-1")
-		require.NoError(t, err)
+		require.Len(t, stored.Players(), 1)
 		_, err = s.Join(ctx, second.Room.Code(), "", "host-2", second.HostToken, "192.0.2.2")
 		require.NoError(t, err)
-		// Guest departure releases participation; finished rooms consume neither quota.
+		_, err = s.Join(ctx, second.Room.Code(), "Guest", "guest-2", "", guestIP)
+		require.ErrorIs(t, err, domain.ErrActiveRoomLimit)
+		stored, err = s.Get(ctx, second.Room.Code())
+		require.NoError(t, err)
+		require.Equal(t, domain.Waiting, stored.Status())
+		require.Len(t, stored.Players(), 1)
+		// A departing waiting guest releases a slot, even if the host is absent.
+		_, err = s.Leave(ctx, first.Room.Code(), "guest-1")
+		require.NoError(t, err)
+		_, err = s.Join(ctx, second.Room.Code(), "Guest", "guest-2", "", guestIP)
+		require.NoError(t, err)
 		_, err = s.Leave(ctx, second.Room.Code(), "guest-2")
 		require.NoError(t, err)
-		_ = create(guestIP)
+		create(guestIP)
 	})
 }
 
@@ -426,6 +425,10 @@ func TestConcurrentCrossRoomGuestJoins(t *testing.T) {
 		ctx := context.Background()
 		now := time.Now().UTC().Truncate(time.Microsecond)
 		s := app.NewService(repo, func() time.Time { return now }, domain.RandomCode)
+		for range domain.MaxRoomsPerIP - 1 {
+			_, err := s.Create(ctx, app.CreateInput{DisplayName: "Guest", RoomType: "PRIVATE", MaxGames: 1, OwnerIP: "198.51.100.1", IdempotencyKey: uuid.NewString()})
+			require.NoError(t, err)
+		}
 		rooms := make([]app.Created, 2)
 		for i := range rooms {
 			r, err := s.Create(ctx, app.CreateInput{DisplayName: "Host", RoomType: "PUBLIC", MaxGames: 1, OwnerIP: fmt.Sprintf("192.0.2.%d", i+1), IdempotencyKey: uuid.NewString()})

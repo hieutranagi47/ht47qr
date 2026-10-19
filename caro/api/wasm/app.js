@@ -116,7 +116,7 @@
     starting = true; $('enter-button').disabled = true; $('room-status').textContent = 'Loading game…';
     try {
       storage.set('name', displayName || name);
-      window.caroConfig = { code, maxGames: room.maxGames, displayName, hostToken: reservation?.hostToken || '' };
+      window.caroConfig = { code, maxGames: room.maxGames, displayName: reservation ? room.players[0].displayName : displayName, hostToken: reservation?.hostToken || '' };
       if (typeof Go !== 'function' || typeof io !== 'function' || !window.caroBridge) throw new Error('Game scripts could not load. Reload this page.');
       if (!window.RTCPeerConnection) throw new Error('WebRTC is unavailable in this browser.');
       const go = new Go();

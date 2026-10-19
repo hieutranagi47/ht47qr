@@ -3,10 +3,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Caro</title>
+    <title>Caro — Five in a row</title>
     <link rel="stylesheet" href="/caro/wasm/style.css" />
     <script defer src="/caro/wasm/socket.io.min.js"></script>
     <script defer src="/caro/wasm/wasm_exec.js"></script>
+    <script defer src="/caro/rtc-config.js"></script>
     <script defer src="/caro/wasm/bridge.js"></script>
     <script defer src="/caro/wasm/app.js"></script>
   </head>
@@ -36,7 +37,6 @@
             <div class="form-row">
               <label
                 >Match length<select name="maxGames">
-                  <option value="1">One game</option>
                   <option value="3">Best of 3</option>
                   <option value="5" selected>Best of 5</option>
                   <option value="7">Best of 7</option>

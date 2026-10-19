@@ -6,7 +6,8 @@ window.caroBridge = {
     // Polling requires sticky routing for every GET/POST and the upgrade request.
     // Keep admission, room joins and heartbeats on one WebSocket connection.
     const socket = io({ path: '/api/v1/caro/socket.io/', transports: ['websocket'], reconnection: false, autoConnect: false, timeout: 10000 });
-    let pc, channel, closed = false, failed = false, joined = false, timeout;
+    let pc, channel, closed = false, failed = false, joined = false, timeout, disconnectTimeout;
+    let channelOpened = false;
     let connected = false, retry, retryDelay = 500, startupTimeout;
     let pendingICE = [], chain = Promise.resolve();
     const emit = (type, data) => { if (!closed) notify(type, data); };
@@ -25,7 +26,7 @@ window.caroBridge = {
     const bindChannel = value => {
       if (channel) { value.close(); return; }
       channel = value;
-      channel.onopen = () => { clearTimeout(timeout); emit('open', {}); };
+      channel.onopen = () => { channelOpened = true; clearTimeout(timeout); emit('open', {}); };
       channel.onmessage = event => {
         if (typeof event.data !== 'string' || event.data.length > 2048) { fail('Invalid peer message'); return; }
         try { emit('message', JSON.parse(event.data)); } catch { fail('Invalid peer message'); }
@@ -44,7 +45,25 @@ window.caroBridge = {
       };
       pc.ondatachannel = event => bindChannel(event.channel);
       pc.onconnectionstatechange = () => {
-        if (['failed', 'closed', 'disconnected'].includes(pc.connectionState)) fail('Peer disconnected. Create a new room to play again.');
+        const state = pc.connectionState;
+        if (state === 'connected') {
+          if (disconnectTimeout) status('Connection restored.');
+          clearTimeout(disconnectTimeout);
+          disconnectTimeout = undefined;
+        } else if (state === 'disconnected') {
+          // ICE can briefly lose connectivity without either player leaving.
+          // During admission, the existing setup deadline bounds this wait.
+          if (channelOpened && !disconnectTimeout) {
+            status('Connection interrupted. Waiting for your opponent…');
+            disconnectTimeout = setTimeout(() => fail('Peer disconnected. Create a new room to play again.'), 10000);
+          }
+        } else if (state === 'failed') {
+          fail(channelOpened
+            ? 'Peer connection failed. Create a new room to play again.'
+            : 'Could not connect to the other player. This network may require a TURN relay.');
+        } else if (state === 'closed') {
+          fail('Peer connection closed. Create a new room to play again.');
+        }
       };
       timeout = setTimeout(() => fail('Could not connect to the other player. This network may require a TURN relay.'), 30000);
       return pc;
@@ -75,12 +94,14 @@ window.caroBridge = {
       emit('room_joined', data);
     });
     socket.on('peer_joined', serial(async () => {
+      emit('peer_joined', {});
       const connection = peer();
       bindChannel(connection.createDataChannel('caro', { ordered: true }));
       await connection.setLocalDescription(await connection.createOffer());
       signal('signal_offer', { type: connection.localDescription.type, sdp: connection.localDescription.sdp });
     }));
     socket.on('signal_offer', serial(async ({ data }) => {
+      emit('peer_joined', {});
       const connection = peer();
       await connection.setRemoteDescription(data);
       await flushICE();
@@ -114,6 +135,7 @@ window.caroBridge = {
       if (closed) return;
       closed = true;
       clearTimeout(timeout);
+      clearTimeout(disconnectTimeout);
       clearTimeout(retry);
       clearTimeout(startupTimeout);
       window.removeEventListener('pagehide', cleanup);

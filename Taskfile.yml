@@ -29,4 +29,4 @@ tasks:
     desc: Build Caro WASM and start the app with PostgreSQL
     deps: [build-wasm]
     cmds:
-      - docker compose up --build
+      - docker compose up --build -d

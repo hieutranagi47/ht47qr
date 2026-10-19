@@ -20,12 +20,13 @@ unexpected errors use the shared safe error envelope.
 
 ## Per-IP room limits
 
-Each normalized IP may create or participate in at most **one unexpired WAITING
-room and one unexpired PLAYING room**. Creation reserves the host's waiting-room
+Each normalized IP may create or participate in at most **50 unexpired rooms total
+across WAITING and PLAYING**. Creation reserves the host's waiting-room
 quota before a socket connects. Guest joins and host bindings record their
-server-resolved IP; a game can start only if every involved IP has a free PLAYING
-quota. A room counts once per IP, even if that IP owns and participates in it.
-FINISHED and expired rooms consume neither quota. Guest departure releases that
+server-resolved IP; every involved IP shares the same combined quota.
+Starting an existing waiting room does not consume an additional slot. A room
+counts once per IP, even if that IP owns and participates in it.
+FINISHED and expired rooms consume no quota. Guest departure releases that
 membership; an unbound waiting host retains its reservation.
 
 The IP comes from Echo's configured extractor, never a JSON field. The default
@@ -142,6 +143,15 @@ WebSocket handshake and join acknowledgement succeeded. The board displays the
 current connection stage and keeps transport errors visible with the information
 panel collapsed.
 
+Transient WebRTC `disconnected` states keep signaling and room membership alive.
+During peer setup, the original 30-second connection deadline remains in force;
+after the data channel opens, a disconnect has 10 seconds to recover. Repeated
+state notifications do not extend that window. A recovered connection preserves
+the existing data channel and match. Failed/closed peer connections, closed data
+channels, signaling loss, and explicit opponent departures remain terminal.
+Initial peer failures report that the network may require a TURN relay; a grace
+period cannot make a STUN-only deployment work on networks that block direct P2P.
+
 Run the bridge retry/lifecycle tests with `node --test tests/testdata/caro_bridge.test.cjs`.
 
 `Service.Run` owns transport shutdown and cleanup. Embedded users must run
@@ -207,12 +217,60 @@ docker compose up --build
 # Or run both steps with: task docker-up
 ```
 
-Compose builds `Dockerfile.vercel` and exposes the app at
+Compose builds `Dockerfile` and exposes the app at
 `http://localhost:8888/caro/boards` (HTTPS at `https://localhost:8443`). It uses
-SQLite in a named volume by default. To test PostgreSQL, set
-`DATABASE_BACKEND=postgres` and `DATABASE_URL` (or `POSTGRES_URL`) in `.env`.
-Optional migration connections use `DATABASE_URL_UNPOOLED` or
-`POSTGRES_URL_NON_POOLING`. Runtime `.env` files are excluded from Docker builds.
+its PostgreSQL service and a persistent named database volume. Runtime `.env`
+files are excluded from Docker builds.
+
+### Test TURN locally
+
+`docker compose up --build -d` starts the app, PostgreSQL, and Coturn. Open
+`http://localhost:8888/caro/boards` in two separate browser sessions, create a
+new room, and invite the second player. Compose defaults to **relay-only** ICE,
+so a successful connection exercises TURN even when direct P2P would work.
+Existing rooms that already failed cannot be reused.
+
+Firefox blocks loopback STUN/TURN servers by default, including the local
+`127.0.0.1:3478` relay. For this same-computer test, open `about:config` in
+Firefox, set `media.peerconnection.ice.loopback` to `true`, reload the game,
+and create a new room. This is a local development setting; a reachable
+non-loopback TURN address avoids the need for it. See
+[Mozilla bug 1973521](https://bugzilla.mozilla.org/show_bug.cgi?id=1973521).
+
+TURN listens on `127.0.0.1:3478` over TCP/UDP and publishes UDP relay ports
+49160–49200. These follow the [Coturn Docker configuration](https://github.com/coturn/coturn/blob/master/docker/coturn/README.md).
+Docker bridge networking works on Docker Desktop without host networking.
+Coturn advertises its container relay address: both relay-only browsers reach
+the relay endpoints through the same TURN server. Do not advertise `127.0.0.1`
+as the external relay address; browsers reject remote loopback ICE candidates.
+Inspect it with `docker compose logs --tail=100 turn`.
+
+`CARO_TURN_HOST` defaults to `127.0.0.1`. For two devices on your LAN, set it
+to this computer's LAN **IPv4 address**, restart with `docker compose up -d`,
+allow port 3478 TCP/UDP and 49160–49200 UDP through the local firewall, and
+open the game over trusted HTTPS on both devices. `localhost` HTTP is suitable
+only for browsers on the Docker host.
+
+The backend serves `/caro/rtc-config.js` before the game bridge, issuing unique
+one-hour HMAC credentials from `CARO_TURN_SECRET`. That shared secret never
+appears in browser responses. The Compose default is for local development;
+set your own secret for other deployments. Keep relay-only mode for this local
+Docker setup. A production relay needs a publicly reachable advertised address
+and relay ports before using `CARO_ICE_TRANSPORT_POLICY=all` for mixed direct P2P
+and TURN. Outside Compose, supply `CARO_TURN_URLS`
+(comma-separated TURN URLs) and `CARO_TURN_SECRET` to enable runtime configuration.
+
+To require evidence of TURN in the existing browser smoke test (Playwright must
+be installed outside the repository):
+
+```sh
+cd ../caro
+CARO_TEST_BASE_URL=http://localhost:8888 CARO_TEST_REQUIRE_RELAY=1 \
+  NODE_PATH=/path/to/playwright-project/node_modules node scripts/browser-smoke.cjs
+```
+
+This asserts both selected ICE candidates are `relay`, then exercises readiness,
+real moves, round wins, and leaving the match.
 
 The WASM task scopes `GOOS=js`, `GOARCH=wasm`, and `CGO_ENABLED=0` to the browser
 build. Do not set these globally in Docker or Vercel: the backend is a native
@@ -237,6 +295,26 @@ Configure these Vercel runtime settings:
 The image supplies the remaining internal listener ports and disables optional
 gRPC. Public HTTP, WASM assets, and Socket.IO signaling share the deployment
 origin, so no client API URL or WebSocket URL environment variable is needed.
-Open `/caro/boards` on the deployed HTTPS origin. WebRTC uses the existing STUN
-configuration; networks requiring a TURN relay still need the browser RTC
-configuration described in the sibling client README.
+For a hosted TURN provider such as ExpressTURN, add these runtime environment
+variables in the Vercel project settings. These are sample values; replace the
+host, username, and password with the values from your provider:
+
+```dotenv
+CARO_TURN_URLS=turn:turn.example.com:3478?transport=udp,turn:turn.example.com:3478?transport=tcp
+CARO_TURN_USERNAME=sample-turn-username
+CARO_TURN_PASSWORD=sample-turn-password
+CARO_ICE_TRANSPORT_POLICY=all
+```
+
+Leave `CARO_TURN_SECRET` unset for hosted credentials. When both username and
+password are supplied, they take precedence over the local coturn secret.
+`all` allows direct connections and TURN fallback; use `relay` to force TURN
+when verifying the deployment. Apply the variables to the intended Vercel
+environment and redeploy for the running server to pick them up.
+
+Open `/caro/boards` on the deployed HTTPS origin. The page loads the runtime
+configuration from `/caro/rtc-config.js` before starting WebRTC. Credentials
+stay out of build assets and the response uses `Cache-Control: no-store`.
+Provider credentials are sent to the browser because WebRTC needs them to
+connect to TURN; they can be inspected by visitors. With no TURN configuration,
+the browser keeps the default public STUN server.

@@ -12,23 +12,17 @@ import (
 )
 
 const countParticipantRooms = `-- name: CountParticipantRooms :one
-SELECT count(*) FROM caro.rooms r WHERE r.status=$1 AND r.expires_at>$2 AND r.id<>$3 AND (r.owner_ip=$4 OR EXISTS (SELECT 1 FROM caro.room_players p WHERE p.room_id=r.id AND p.participant_ip=$4))
+SELECT count(*) FROM caro.rooms r WHERE r.status IN ('WAITING','PLAYING') AND r.expires_at>$1 AND r.id<>$2 AND (r.owner_ip=$3 OR EXISTS (SELECT 1 FROM caro.room_players p WHERE p.room_id=r.id AND p.participant_ip=$3))
 `
 
 type CountParticipantRoomsParams struct {
-	Status    string
 	Cutoff    pgtype.Timestamptz
 	ExcludeID string
 	Ip        pgtype.Text
 }
 
 func (q *Queries) CountParticipantRooms(ctx context.Context, arg CountParticipantRoomsParams) (int64, error) {
-	row := q.db.QueryRow(ctx, countParticipantRooms,
-		arg.Status,
-		arg.Cutoff,
-		arg.ExcludeID,
-		arg.Ip,
-	)
+	row := q.db.QueryRow(ctx, countParticipantRooms, arg.Cutoff, arg.ExcludeID, arg.Ip)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
