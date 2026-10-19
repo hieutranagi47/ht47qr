@@ -17,8 +17,10 @@ services:
       GOGC: "90" # Xác định tỷ lệ phần trăm tăng trưởng của bộ nhớ heap trước khi đợt thu gom rác tiếp theo được kích hoạt (mặc định là 100).
       TZ: Asia/Ho_Chi_Minh
       # Force TURN locally so a successful game proves the relay works.
-      CARO_TURN_URLS: "turn:${CARO_TURN_HOST:-127.0.0.1}:3478?transport=tcp,turn:${CARO_TURN_HOST:-127.0.0.1}:3478?transport=udp"
+      CARO_TURN_URLS: "${CARO_TURN_URLS:-turn:${CARO_TURN_HOST:-127.0.0.1}:3478?transport=tcp,turn:${CARO_TURN_HOST:-127.0.0.1}:3478?transport=udp}"
       CARO_TURN_SECRET: "${CARO_TURN_SECRET:-caro-local-development-only}"
+      CARO_TURN_USERNAME: "${CARO_TURN_USERNAME:-}"
+      CARO_TURN_PASSWORD: "${CARO_TURN_PASSWORD:-}"
       CARO_ICE_TRANSPORT_POLICY: "${CARO_ICE_TRANSPORT_POLICY:-relay}"
       # Container listeners are fixed; SERVER_PORT below selects the host port.
       SERVER_PORT: "8080"

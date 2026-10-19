@@ -295,16 +295,22 @@ Configure these Vercel runtime settings:
 The image supplies the remaining internal listener ports and disables optional
 gRPC. Public HTTP, WASM assets, and Socket.IO signaling share the deployment
 origin, so no client API URL or WebSocket URL environment variable is needed.
-For a hosted TURN provider such as ExpressTURN, add these runtime environment
-variables in the Vercel project settings. These are sample values; replace the
-host, username, and password with the values from your provider:
+For the ExpressTURN free tier, add these runtime environment variables in the
+Vercel project settings. Replace the username and password with your account's
+credentials, and use the exact server host/port shown in your dashboard:
 
 ```dotenv
-CARO_TURN_URLS=turn:turn.example.com:3478?transport=udp,turn:turn.example.com:3478?transport=tcp
+CARO_TURN_URLS=turn:free.expressturn.com:3478?transport=udp,turn:free.expressturn.com:3478?transport=tcp
 CARO_TURN_USERNAME=sample-turn-username
 CARO_TURN_PASSWORD=sample-turn-password
 CARO_ICE_TRANSPORT_POLICY=all
 ```
+
+No secret key is required. ExpressTURN's shared-secret authentication is a
+Premium feature; the free tier uses the username and password directly.
+Outside Compose, omitting `CARO_TURN_URLS` with provider credentials defaults to
+`free.expressturn.com:3478` over UDP and TCP. In Compose, set `CARO_TURN_URLS`
+explicitly to replace the local relay and set both credentials in `.env`.
 
 Leave `CARO_TURN_SECRET` unset for hosted credentials. When both username and
 password are supplied, they take precedence over the local coturn secret.

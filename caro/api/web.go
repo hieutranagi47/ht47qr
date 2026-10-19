@@ -41,6 +41,11 @@ func RegisterWeb(router common.EchoRouter) {
 	turnURLs, turnSecret := os.Getenv("CARO_TURN_URLS"), os.Getenv("CARO_TURN_SECRET")
 	turnUsername, turnPassword := os.Getenv("CARO_TURN_USERNAME"), os.Getenv("CARO_TURN_PASSWORD")
 	staticCredentials := turnUsername != "" || turnPassword != ""
+	// ExpressTURN's free tier uses the supplied username/password directly.
+	// Explicit URLs override the free-tier default, including in deployments.
+	if strings.TrimSpace(turnURLs) == "" && staticCredentials {
+		turnURLs = "turn:free.expressturn.com:3478?transport=udp,turn:free.expressturn.com:3478?transport=tcp"
+	}
 	policy := os.Getenv("CARO_ICE_TRANSPORT_POLICY")
 	router.GET("/caro/rtc-config.js", secure(func(c *echo.Context) error {
 		c.Response().Header().Set("Cache-Control", "no-store")

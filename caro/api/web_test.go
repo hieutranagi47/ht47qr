@@ -102,7 +102,10 @@ func TestRTCConfigProviderCredentials(t *testing.T) {
 		name, urls, username, password, policy string
 		configured                             bool
 	}{
+		{"ExpressTURN free tier", "", "sample-turn-user", "sample-turn-password+/=", "all", true},
+		{"ExpressTURN whitespace URLs", " \t ", "sample-turn-user", "sample-turn-password", "all", true},
 		{"provider", "turn:turn.example.com:3478?transport=udp, turn:turn.example.com:3478?transport=tcp", "sample-turn-user", "sample-turn-password+/=", "all", true},
+		{"provider overrides secret", "turn:turn.example.com:3478", "sample-turn-user", "sample-turn-password", "all", true},
 		{"relay only", "turn:turn.example.com:3478", "sample-turn-user", "sample-turn-password", "relay", true},
 		{"missing password", "turn:turn.example.com:3478", "sample-turn-user", "", "all", false},
 		{"missing username", "turn:turn.example.com:3478", "", "sample-turn-password", "all", false},
@@ -112,8 +115,11 @@ func TestRTCConfigProviderCredentials(t *testing.T) {
 			t.Setenv("CARO_TURN_URLS", tc.urls)
 			t.Setenv("CARO_TURN_USERNAME", tc.username)
 			t.Setenv("CARO_TURN_PASSWORD", tc.password)
-			// Provider credentials must override a leftover local coturn secret.
-			t.Setenv("CARO_TURN_SECRET", "test-private-secret")
+			t.Setenv("CARO_TURN_SECRET", "")
+			if tc.name == "provider overrides secret" {
+				// Provider credentials must override a leftover local coturn secret.
+				t.Setenv("CARO_TURN_SECRET", "test-private-secret")
+			}
 			t.Setenv("CARO_ICE_TRANSPORT_POLICY", tc.policy)
 			e := echo.New()
 			RegisterWeb(e)
@@ -140,7 +146,11 @@ func TestRTCConfigProviderCredentials(t *testing.T) {
 			require.Equal(t, tc.username, server.Username)
 			require.Equal(t, tc.password, server.Credential)
 			var urls []string
-			for _, value := range strings.Split(tc.urls, ",") {
+			expectedURLs := tc.urls
+			if strings.TrimSpace(expectedURLs) == "" {
+				expectedURLs = "turn:free.expressturn.com:3478?transport=udp,turn:free.expressturn.com:3478?transport=tcp"
+			}
+			for _, value := range strings.Split(expectedURLs, ",") {
 				urls = append(urls, strings.TrimSpace(value))
 			}
 			require.Equal(t, urls, server.URLs)
