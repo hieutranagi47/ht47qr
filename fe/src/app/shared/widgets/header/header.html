@@ -1,19 +1,32 @@
 <header class="header">
   <div class="container d-flex items-center justify-between">
     <a routerLink="/" class="logo d-flex items-center gap-12 fw-800 fs-24 lh-80">
-      <img src="/images/logo.jpg" height="40" width="40" alt="The website logo on the main header bar" />
+      <img
+        src="/images/logo.jpg"
+        height="40"
+        width="40"
+        alt="The website logo on the main header bar"
+      />
       <span class="logo-text">Hieu Tran</span>
     </a>
     <nav class="menu-container" role="main navigation">
       <ul class="menu-list reset-ul d-flex gap-16" role="menubar" aria-label="Main menu">
         <li class="menu-item relative" routerLinkActive="active">
-          <a class="d-inline-block fw-600" [routerLink]="['/', qrCodeRoute]" role="menuitem">QR Code Generator</a>
+          <a class="d-inline-block fw-600" [routerLink]="['/', qrCodeRoute]" role="menuitem"
+            >QR Code Generator</a
+          >
           <span class="underline absolute"></span>
         </li>
         <li class="menu-item relative" routerLinkActive="active">
-          <a class="d-inline-block fw-600"
-            [routerLink]="['/', tinyUrlRoute]"
-            role="menuitem">URL Shorten</a>
+          <a class="d-inline-block fw-600" [routerLink]="['/', tinyUrlRoute]" role="menuitem"
+            >URL Shorten</a
+          >
+          <span class="underline absolute"></span>
+        </li>
+        <li class="menu-item relative" routerLinkActive="active">
+          <a class="d-inline-block fw-600" [routerLink]="['/', caroRoute]" role="menuitem"
+            >Caro Game</a
+          >
           <span class="underline absolute"></span>
         </li>
       </ul>
