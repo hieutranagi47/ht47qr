@@ -80,7 +80,8 @@ ENV SERVER_PORT=8080 \
     POSTGRES_URL="" \
     POSTGRES_URL_NON_POOLING="" \
     TLS_CERT="" \
-    TLS_KEY=""
+    TLS_KEY="" \
+    SERVER_HOST="https://ht47qr.onrender.com"
 
 
 EXPOSE 8080 8443 8886 8446
