@@ -1,8 +1,29 @@
-# Build the server with the checked-in client/api and Caro web assets.
-# Generated Go sources and web assets must be present before building.
+# Build the Angular frontend that the Go client module embeds.
+FROM node:24-alpine AS fe_builder
+
+WORKDIR /app/fe
+
+RUN npm install --global pnpm@10.8.1
+
+COPY fe/package.json fe/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
+COPY fe/angular.json fe/tsconfig*.json ./
+COPY fe/src/ ./src/
+COPY fe/public/ ./public/
+
+RUN pnpm run build --configuration production
+
 FROM golang:1.27.1-alpine AS builder
 
-RUN apk add --no-cache ca-certificates gcc musl-dev
+RUN apk add --no-cache ca-certificates pkgconf gcc libc-dev musl-dev git protobuf
+
+# Install the generators used by task gen.
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go install github.com/go-task/task/v3/cmd/task@v3.53.1 \
+    && go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.12 \
+    && go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1 \
+    && go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1
 
 WORKDIR /app
 
@@ -10,6 +31,12 @@ COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
 
 COPY . ./
+
+# Use the production frontend in the Go embed directory, then regenerate Go sources.
+RUN rm -rf /app/client/api
+COPY --from=fe_builder /app/client/api/ /app/client/api/
+
+RUN --mount=type=cache,target=/go/pkg/mod task gen
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=1 go build -mod=readonly -tags musl -trimpath -o /out/htqrcode ./cmd
