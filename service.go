@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -124,8 +125,8 @@ func (s *Service) Run(ctx context.Context, httpPort, httpsPort, ssePort, ssesPor
 	if len(grpcPorts) > 1 {
 		return fmt.Errorf("at most one gRPC port may be configured")
 	}
-	cert := []byte(os.Getenv("TLS_CERT"))
-	key := []byte(os.Getenv("TLS_KEY"))
+	cert := []byte(normalizePEMEnvironmentValue(os.Getenv("TLS_CERT")))
+	key := []byte(normalizePEMEnvironmentValue(os.Getenv("TLS_KEY")))
 	grpcPort := ""
 	if len(grpcPorts) == 1 {
 		grpcPort = grpcPorts[0]
@@ -136,7 +137,7 @@ func (s *Service) Run(ctx context.Context, httpPort, httpsPort, ssePort, ssesPor
 			return fmt.Errorf("TLS_CERT and TLS_KEY must contain PEM-encoded certificate and private key when TLS listeners are enabled")
 		}
 		if _, err := tls.X509KeyPair(cert, key); err != nil {
-			return fmt.Errorf("loading TLS_CERT/TLS_KEY (expected PEM content with real newlines, not file paths or literal \\n): %w", err)
+			return fmt.Errorf("loading TLS_CERT/TLS_KEY (expected PEM content, not file paths): %w", err)
 		}
 	}
 	for _, port := range []string{httpPort, ssePort} {
@@ -178,6 +179,12 @@ func (s *Service) Run(ctx context.Context, httpPort, httpsPort, ssePort, ssesPor
 		g.Go(func() error { return s.runGRPC(ctx, grpcPort, cert, key) })
 	}
 	return g.Wait()
+}
+
+// normalizePEMEnvironmentValue supports cloud settings that encode PEM newlines
+// as the two characters "\\n" in a single-line environment variable.
+func normalizePEMEnvironmentValue(value string) string {
+	return strings.ReplaceAll(value, `\n`, "\n")
 }
 
 func serveHTTP(ctx context.Context, config echo.StartConfig, router *echo.Echo, secure bool, cert, key []byte) error {
