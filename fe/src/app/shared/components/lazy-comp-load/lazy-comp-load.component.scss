@@ -1,0 +1,19 @@
+@use "sass:color";
+@use "mixins/general" as *;
+@use "bases/colors" as *;
+@use "bases/config" as *;
+
+.lazy-comp-loading {
+  position: fixed;
+  height: 100dvh;
+  width: 100%;
+  background-color: hsla($black-color-alpha, 0.47);
+  display: flex;
+  z-index: $zindex-tooltip;
+}
+
+.loading {
+  margin: auto;
+  width: 8.7rem;
+  height: auto;
+}

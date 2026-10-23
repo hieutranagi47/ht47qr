@@ -4,9 +4,10 @@ import { Footer } from './shared/widgets/footer/footer';
 import { RouterOutlet } from '@angular/router';
 import { MobileViewDirective } from './shared/directives/view-height/mobile-view.directive';
 import { SeoMetaService } from './core/seo/meta.service';
+import { LazyCompLoadComponent } from './shared/components/lazy-comp-load/lazy-comp-load.component';
 
 @Component({
-  imports: [Header, Footer, RouterOutlet, MobileViewDirective],
+  imports: [Header, Footer, RouterOutlet, MobileViewDirective, LazyCompLoadComponent],
   selector: 'app-root',
   styleUrl: './app.scss',
   templateUrl: './app.html',
