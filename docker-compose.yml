@@ -2,7 +2,7 @@ services:
   htqrcode:
     build:
       context: ./
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.local
     depends_on:
       postgres:
         condition: service_healthy
