@@ -26,11 +26,12 @@ COPY --from=builder /out/htqrcode ./htqrcode
 
 USER app
 
-# Supply DATABASE_URL and TLS_CERT/TLS_KEY at runtime (Compose does this).
+# Supply DATABASE_URL at runtime. TLS listeners are disabled unless their ports
+# and matching TLS_CERT/TLS_KEY values are configured by the cloud environment.
 ENV SERVER_PORT=8080 \
-    SERVER_PORT_TLS=8443 \
+    SERVER_PORT_TLS="" \
     SERVER_SSE_PORT=8886 \
-    SERVER_SSE_PORT_TLS=8446 \
+    SERVER_SSE_PORT_TLS="" \
     SERVER_GRPC_PORT="" \
     DATABASE_BACKEND=postgres \
     SQLITE_PATH=/app/data/htqrcode.db \

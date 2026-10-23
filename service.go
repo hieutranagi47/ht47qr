@@ -126,15 +126,22 @@ func (s *Service) Run(ctx context.Context, httpPort, httpsPort, ssePort, ssesPor
 	}
 	cert := []byte(os.Getenv("TLS_CERT"))
 	key := []byte(os.Getenv("TLS_KEY"))
-	if len(cert) == 0 || len(key) == 0 {
-		return fmt.Errorf("TLS_CERT and TLS_KEY must contain PEM-encoded certificate and private key")
+	grpcPort := ""
+	if len(grpcPorts) == 1 {
+		grpcPort = grpcPorts[0]
 	}
-	if _, err := tls.X509KeyPair(cert, key); err != nil {
-		return fmt.Errorf("loading TLS_CERT/TLS_KEY (expected PEM content with real newlines, not file paths or literal \\n): %w", err)
+	tlsEnabled := httpsPort != "" || ssesPort != "" || grpcPort != ""
+	if tlsEnabled {
+		if len(cert) == 0 || len(key) == 0 {
+			return fmt.Errorf("TLS_CERT and TLS_KEY must contain PEM-encoded certificate and private key when TLS listeners are enabled")
+		}
+		if _, err := tls.X509KeyPair(cert, key); err != nil {
+			return fmt.Errorf("loading TLS_CERT/TLS_KEY (expected PEM content with real newlines, not file paths or literal \\n): %w", err)
+		}
 	}
-	for _, port := range []string{httpPort, httpsPort, ssePort, ssesPort} {
+	for _, port := range []string{httpPort, ssePort} {
 		if port == "" {
-			return fmt.Errorf("HTTP, HTTPS, SSE and SSE TLS ports must be configured")
+			return fmt.Errorf("HTTP and SSE ports must be configured")
 		}
 	}
 	g, ctx := errgroup.WithContext(ctx)
@@ -151,6 +158,9 @@ func (s *Service) Run(ctx context.Context, httpPort, httpsPort, ssePort, ssesPor
 		{port: ssePort, stream: true},
 		{port: ssesPort, tls: true, stream: true},
 	} {
+		if listener.port == "" {
+			continue
+		}
 		router := s.echoRouter
 		if listener.stream {
 			router = s.echoSSERouter
@@ -164,8 +174,8 @@ func (s *Service) Run(ctx context.Context, httpPort, httpsPort, ssePort, ssesPor
 		})
 	}
 
-	if len(grpcPorts) == 1 && grpcPorts[0] != "" {
-		g.Go(func() error { return s.runGRPC(ctx, grpcPorts[0], cert, key) })
+	if grpcPort != "" {
+		g.Go(func() error { return s.runGRPC(ctx, grpcPort, cert, key) })
 	}
 	return g.Wait()
 }
