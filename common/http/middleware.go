@@ -34,7 +34,7 @@ func useMiddlewares(e *echo.Echo) {
 				http.MethodPost,
 			},
 		}),
-		middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(20.0)),
+		middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(200.0)),
 		middleware.ContextTimeoutWithConfig(middleware.ContextTimeoutConfig{
 			Timeout: 10 * time.Second,
 			Skipper: isLongLivedRequest,
